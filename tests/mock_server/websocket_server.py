@@ -3,6 +3,7 @@ import numpy as np
 import cv2
 import frame_pb2
 import tornado.websocket 
+import tornado.speedups
 
 PORT = 8000
 
@@ -14,11 +15,17 @@ class EchoWebSocket(tornado.websocket.WebSocketHandler):
         print("WebSocket opened")
 
     def on_message(self, message):
-        print("You said: ")
-        print(message)
-        f = frame_pb2.Frame()
-        f.ParseFromString(message)
-        print(f)
+        # print("You said: ")
+        # print(message)
+        # f = frame_pb2.Frame()
+        # f.ParseFromString(message)
+        frame = np.frombuffer(message, dtype=np.uint8)
+        # print((f.rows, f.cols))
+        # frame = np.reshape(frame, (f.rows, f.cols))
+        frame = cv2.imdecode(frame, cv2.IMWRITE_JPEG_QUALITY)
+        cv2.imshow("frame", frame)
+        cv2.waitKey(10)
+        # print(frame)
 
     def on_close(self):
         print("WebSocket closed")
