@@ -15,18 +15,13 @@ class EchoWebSocket(tornado.websocket.WebSocketHandler):
         print("WebSocket opened")
 
     def on_message(self, message):
-        # print("You said: ")
-        # print(message)
-        # f = frame_pb2.Frame()
-        # f.ParseFromString(message)
-        frame = np.frombuffer(message, dtype=np.uint8)
-        # print((f.rows, f.cols))
-        # frame = np.reshape(frame, (f.rows, f.cols))
-        frame = cv2.imdecode(frame, cv2.IMWRITE_JPEG_QUALITY)
-        cv2.imshow("frame", frame)
-        cv2.waitKey(10)
-        # print(frame)
-
+        pass
+        print("mes")
+        # frame = np.frombuffer(message, dtype=np.uint8)
+        # frame = cv2.imdecode(frame, cv2.IMWRITE_JPEG_QUALITY)
+        # cv2.imshow("frame", frame)
+        # cv2.waitKey(10)
+        
     def on_close(self):
         print("WebSocket closed")
 

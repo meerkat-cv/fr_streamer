@@ -1,11 +1,11 @@
-#include <cv.h>
-#include <highgui.h>
+#include <opencv2/opencv.hpp>
+#include <opencv2/highgui.hpp>
 
 
 
 int main () {
 
-	cv::VideoCapture cap(0);
+	cv::VideoCapture cap("http://admin:gremio83@192.168.0.52/video/mjpg.cgi?.mjpeg");
 
 	while (true) {
 		cv::Mat image;

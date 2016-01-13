@@ -1,8 +1,0 @@
-
-package frame;
-
-message Frame {
-	required int32 cols = 1;
-	required int32 rows = 2;
-	required bytes data = 3;
-}
