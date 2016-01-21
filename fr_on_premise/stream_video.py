@@ -82,8 +82,7 @@ class StreamVideo(WebSocketClient):
         print('streaming!!!')
         ret, self.original_frame = self.video.read()
 
-        # what video.read() returns when the video is over? Zero sized image? A None variable?
-        if self.original_frame.size < 1000:
+        if self.original_frame is None:
             self.close()
             return
 
