@@ -4,10 +4,9 @@ import time
 
 def main():
     frapi = FrapiClient()
-    frapi.transmit('/home/guilherme/obama.mp4', 'ws://localhost:4444/frapi_echo?api_key=f0848b0439c00687dbf18296623b9754')
-    frapi.transmit('/home/guilherme/obama.mp4', 'ws://localhost:4444/frapi_echo?api_key=f0848b0439c00687dbf18296623b9754')
-    frapi.transmit('/home/guilherme/obama.mp4', 'ws://localhost:4444/frapi_echo?api_key=f0848b0439c00687dbf18296623b9754')
-
+    frapi.transmit('Fickel', '/home/guilherme/meerkat/datasets/meerkat_friends/guilherme_training.avi', 'ws://localhost:4444/recognize?api_key=15220085839d05fdc0bb28bd0f90732e')
+    frapi.transmit('Obama', '/home/guilherme/obama.mp4', 'ws://localhost:4444/recognize?api_key=15220085839d05fdc0bb28bd0f90732e')
+    
     try:
     	time.sleep(100)
     except KeyboardInterrupt:
