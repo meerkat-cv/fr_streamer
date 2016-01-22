@@ -22,12 +22,12 @@ class StreamVideo(WebSocketClient):
 
 
     def call_stream(self):
-        if self.time_out_stream != None:
+        if self.time_out_stream is not None:
             ioloop.IOLoop().instance().remove_timeout(self.time_out_stream)
 
         self.stream()
-        deadline = time.time() + 5 # 5 seconds seems good enough
-        self.time_out_stream = ioloop.IOLoop().instance().add_timeout(deadline, self.call_stream)
+        deadline = time.time() + 10
+        self.time_out_stream = ioloop.IOLoop().instance().add_timeout(deadline, self.close)
 
     
     def config(self, stream_path, ws_url, stream_id, client):
@@ -53,6 +53,11 @@ class StreamVideo(WebSocketClient):
 
     def _on_connection_success(self):
         self.stream()
+
+
+    def _on_connection_close(self):
+        if self.time_out_stream is not None:
+            ioloop.IOLoop().instance().remove_timeout(self.time_out_stream)
 
 
     @gen.coroutine
