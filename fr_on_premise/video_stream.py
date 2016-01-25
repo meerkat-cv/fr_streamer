@@ -76,9 +76,6 @@ class VideoFile(VideoStream):
         ret, frame = self.video.read()
         self.curr_frame = self.curr_frame+1
 
-        if frame is None:
-            print("PROBLEM READING FRAME")
-
         return frame
 
 
@@ -127,11 +124,12 @@ class ImageDir(VideoStream):
 
     def get_next_frame(self):
         self.skip_frames(self.step_frame-1)
+
+        if self.curr_frame >= len(self.files):
+            return None
+
         frame = cv2.imread(self.files[self.curr_frame])
         self.curr_frame = self.curr_frame+1
-
-        if frame is None:
-            print("PROBLEM READING FRAME")
 
         return frame
 
