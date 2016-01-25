@@ -36,7 +36,7 @@ class VideoStream():
         print('You are using VideoStream wrong.')
 
     def isOpened(self):
-        return is_opened
+        return self.is_opened
     
 
 
