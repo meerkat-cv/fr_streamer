@@ -13,12 +13,16 @@ class StreamVideo(WebSocketClient):
         self.time_out_stream = None
         self.original_frame = None
         self.stream_id = -1
+        self.closing = False
         
 
     def _on_message(self, msg):
         ores = json.loads(msg)
         self.client.on_message(self.original_frame, ores, self.stream_id)
-        self.call_stream()
+        if self.closing == True:
+            self.close()
+        else:
+            self.call_stream()
 
 
     def call_stream(self):
@@ -56,21 +60,20 @@ class StreamVideo(WebSocketClient):
 
 
     def _on_connection_close(self):
+        print('Closing connection of stream_id', self.stream_id)
         if self.time_out_stream is not None:
             ioloop.IOLoop().instance().remove_timeout(self.time_out_stream)
 
 
     @gen.coroutine
     def stream(self):
-        print('streaming!!!')
         ret, self.original_frame = self.video.read()
 
         if self.original_frame is None:
-            print('Closing')
-            self.close()
+            self.closing = True
             return
 
         frame = cv2.cvtColor(self.original_frame, cv2.COLOR_BGR2GRAY)
-        _, framecomp = cv2.imencode('.jpg', frame)
+        _, framecomp = cv2.imencode('.jpg', self.original_frame)
 
         self.send(framecomp.tobytes())
