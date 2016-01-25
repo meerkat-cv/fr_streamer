@@ -187,6 +187,7 @@ class CameraUrl(VideoStream):
                 time.sleep(0.015)
 
         t = Thread(target = capture_thread, args=(self,))
+        t.daemon = True
         t.start()
         
         # I'm waiting for the camera to start receiving. Otherwise, if 
@@ -198,6 +199,7 @@ class CameraUrl(VideoStream):
         
 
     def close(self):
+        self.is_opened = False
         self.video.release()
 
 
