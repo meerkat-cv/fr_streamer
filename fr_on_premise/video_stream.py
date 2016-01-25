@@ -8,7 +8,7 @@ from pprint import pprint
 class VideoStream():
 
     def __init__(self):
-        pass
+        is_opened = False
         
 
     def read_video_stream(self, config_file):
@@ -32,6 +32,13 @@ class VideoStream():
     def get_next_frame(self):
         print('You are using VideoStream wrong.')
 
+    def is_opened(self):
+        print('You are using VideoStream wrong.')
+
+    def isOpened(self):
+        return is_opened
+    
+
 
 
 class VideoFile(VideoStream):
@@ -40,6 +47,7 @@ class VideoFile(VideoStream):
         self.step_frame = 1
         self.start_frame = 1
         self.curr_frame = 0
+        self.is_opened = False
         self.open(config_data['video_file'])
 
         if config_data.get('begin_frame') is not None:
@@ -58,6 +66,8 @@ class VideoFile(VideoStream):
         self.video = cv2.VideoCapture(video_name)
         if self.video.isOpened() == False:
             print('VideoStream::open() -- problem opening', video_name)
+        else:
+            self.is_opened = True
 
 
     def skip_frames(self, num_frames):
@@ -71,10 +81,16 @@ class VideoFile(VideoStream):
 
 
     def get_next_frame(self):
+        if self.is_opened == False:
+            return None
+
         self.skip_frames(self.step_frame-1)
 
         ret, frame = self.video.read()
         self.curr_frame = self.curr_frame+1
+
+        if frame is None:
+            is_opened = False
 
         return frame
 
@@ -86,6 +102,7 @@ class ImageDir(VideoStream):
         self.step_frame = 1
         self.start_frame = 1
         self.curr_frame = 0
+        self.is_opened = False
         self.files = []
         
         self.open(config_data['image_dir'])
@@ -115,6 +132,8 @@ class ImageDir(VideoStream):
                 self.files.append(image_dir + '/' + file)
 
         self.files.sort()
+        if len(files) > 0:
+            self.is_opened = True
         
 
     def close(self):
@@ -124,7 +143,8 @@ class ImageDir(VideoStream):
     def get_next_frame(self):
         self.skip_frames(self.step_frame-1)
 
-        if self.curr_frame >= len(self.files):
+        if self.curr_frame >= len(self.files) or self.is_opened == False:
+            self.is_opened = False
             return None
 
         frame = cv2.imread(self.files[self.curr_frame])
@@ -137,6 +157,7 @@ class CameraUrl(VideoStream):
 
     def __init__(self, config_data):
         self.curr_frame = 0
+        self.is_opened = False
         self.open(config_data['camera_url'])
 
 
@@ -148,6 +169,8 @@ class CameraUrl(VideoStream):
 
         if self.video.isOpened() == False:
             print('VideoStream::open() -- problem opening', camera_url)
+        else:
+            self.is_opened = True
         
 
     def close(self):
@@ -155,10 +178,14 @@ class CameraUrl(VideoStream):
 
 
     def get_next_frame(self):
+        if self.is_opened == False:
+            return None
+
         ret, frame = self.video.read()
         self.curr_frame = self.curr_frame+1
 
         if frame is None:
+            self.is_opened = False
             print("VideoStream::get_next_frame() -- problem reading frame.")
 
         return frame
