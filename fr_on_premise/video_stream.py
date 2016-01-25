@@ -57,7 +57,7 @@ class VideoFile(VideoStream):
     def open(self, video_name):
         self.video = cv2.VideoCapture(video_name)
         if self.video.isOpened() == False:
-            print('problem opening', video_name)
+            print('VideoStream::open() -- problem opening', video_name)
 
 
     def skip_frames(self, num_frames):
@@ -112,7 +112,6 @@ class ImageDir(VideoStream):
             file_ext = file_ext.lower()
             if file_ext == ".jpg" or file_ext == ".jpeg" or \
                 file_ext == ".png" or file_ext == ".bmp" or file_ext == ".tiff":
-                print(file)
                 self.files.append(image_dir + '/' + file)
 
         self.files.sort()
@@ -148,7 +147,7 @@ class CameraUrl(VideoStream):
             self.video = cv2.VideoCapture(camera_url)
 
         if self.video.isOpened() == False:
-            print('VideoStream::get_next_frame() -- problem opening', camera_url)
+            print('VideoStream::open() -- problem opening', camera_url)
         
 
     def close(self):
