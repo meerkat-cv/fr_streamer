@@ -10,6 +10,8 @@ class VideoStream():
 
     def __init__(self):
         is_opened = False
+        self.curr_frame = 0
+        self.end_frame = -1
         
 
     def read_video_stream(self, config_file):
@@ -38,6 +40,16 @@ class VideoStream():
 
     def isOpened(self):
         return self.is_opened
+
+    def has_ended(self):
+        if self.end_frame <= 0:
+            return False
+        elif self.curr_frame < self.end_frame:
+            return False
+        else:
+            return True
+
+
     
 
 
@@ -47,6 +59,7 @@ class VideoFile(VideoStream):
     def __init__(self, config_data):
         self.step_frame = 1
         self.start_frame = 1
+        self.end_frame = -1
         self.curr_frame = 0
         self.is_opened = False
         self.open(config_data['video_file'])
@@ -58,6 +71,9 @@ class VideoFile(VideoStream):
 
         if config_data.get('step_frame') is not None:
             self.step_frame = config_data['step_frame']
+
+        if config_data.get('end_frame') is not None:
+            self.end_frame = config_data['end_frame']
 
         if config_data.get('begin_frame') is not None:
             self.start_frame = config_data['begin_frame']
@@ -82,7 +98,7 @@ class VideoFile(VideoStream):
 
 
     def get_next_frame(self):
-        if self.is_opened == False:
+        if self.is_opened == False or self.has_ended():
             return None
 
         self.skip_frames(self.step_frame-1)
@@ -102,6 +118,7 @@ class ImageDir(VideoStream):
     def __init__(self, config_data):
         self.step_frame = 1
         self.start_frame = 1
+        self.end_frame = -1
         self.curr_frame = 0
         self.is_opened = False
         self.files = []
@@ -115,6 +132,9 @@ class ImageDir(VideoStream):
 
         if config_data.get('step_frame') is not None:
             self.step_frame = config_data['step_frame']
+
+        if config_data.get('end_frame') is not None:
+            self.end_frame = config_data['end_frame']
 
         if config_data.get('begin_frame') is not None:
             self.start_frame = config_data['begin_frame']
@@ -144,7 +164,7 @@ class ImageDir(VideoStream):
     def get_next_frame(self):
         self.skip_frames(self.step_frame-1)
 
-        if self.curr_frame >= len(self.files) or self.is_opened == False:
+        if self.curr_frame >= len(self.files) or self.is_opened == False or self.has_ended():
             self.is_opened = False
             return None
 
@@ -158,9 +178,13 @@ class CameraUrl(VideoStream):
 
     def __init__(self, config_data):
         self.curr_frame = 0
+        self.end_frame = -1
         self.frame = None
         self.is_opened = False
         self.open(config_data['camera_url'])
+
+        if config_data.get('end_frame') is not None:
+            self.end_frame = config_data['end_frame']
 
 
     def open(self, camera_url):
@@ -204,7 +228,7 @@ class CameraUrl(VideoStream):
 
 
     def get_next_frame(self):
-        if self.is_opened == False:
+        if self.is_opened == False or self.has_ended():
             return None
 
         return self.frame
