@@ -3,6 +3,7 @@ import time
 import cv2
 import os
 from pprint import pprint
+from threading import Thread
 
 
 class VideoStream():
@@ -157,6 +158,7 @@ class CameraUrl(VideoStream):
 
     def __init__(self, config_data):
         self.curr_frame = 0
+        self.frame = None
         self.is_opened = False
         self.open(config_data['camera_url'])
 
@@ -171,6 +173,28 @@ class CameraUrl(VideoStream):
             print('VideoStream::open() -- problem opening', camera_url)
         else:
             self.is_opened = True
+
+        def capture_thread(self):
+            if self.is_opened == False:
+                return
+            
+            while self.is_opened:
+                ret, self.frame = self.video.read()
+                self.curr_frame = self.curr_frame+1
+                if self.frame is None:
+                    self.is_opened = False
+
+                time.sleep(0.015)
+
+        t = Thread(target = capture_thread, args=(self,))
+        t.start()
+        
+        # I'm waiting for the camera to start receiving. Otherwise, if 
+        # get_next_frame is called before that, it will return an invalid
+        # image
+        start = time.time()
+        while self.frame is None and (time.time()-start) < 5:
+            time.sleep(0.05)
         
 
     def close(self):
@@ -181,13 +205,6 @@ class CameraUrl(VideoStream):
         if self.is_opened == False:
             return None
 
-        ret, frame = self.video.read()
-        self.curr_frame = self.curr_frame+1
-
-        if frame is None:
-            self.is_opened = False
-            print("VideoStream::get_next_frame() -- problem reading frame.")
-
-        return frame
+        return self.frame
 
 
