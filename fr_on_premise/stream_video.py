@@ -1,5 +1,5 @@
 from fr_on_premise.websocket_client import *
-
+from fr_on_premise.video_stream import VideoStream
 import functools
 import json
 import time
@@ -34,8 +34,9 @@ class StreamVideo(WebSocketClient):
         self.time_out_stream = ioloop.IOLoop().instance().add_timeout(deadline, self.close)
 
     
-    def config(self, stream_path, ws_url, stream_id, client):
-        self.video = cv2.VideoCapture(stream_path)
+    def config(self, config_name, ws_url, stream_id, client):
+        stream = VideoStream()
+        self.video = stream.read_video_stream(config_name)
         self.client = client
         self.stream_id = stream_id
         if self.video.isOpened() == False:
@@ -67,7 +68,7 @@ class StreamVideo(WebSocketClient):
 
     @gen.coroutine
     def stream(self):
-        ret, self.original_frame = self.video.read()
+        self.original_frame = self.video.get_next_frame()
 
         if self.original_frame is None:
             self.closing = True
