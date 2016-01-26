@@ -5,29 +5,14 @@ import time
 import cv2
 
 def main():
-    # frapi = FrapiClient()
-    # frapi.transmit('Fickel', 'config.json', 'ws://localhost:4444/recognize?api_key=35cac5b9593ff5ebc71b311d4ecf8b42')
-    # # frapi.transmit('Obama', 'config_obama.json', 'ws://localhost:4444/recognize?api_key=35cac5b9593ff5ebc71b311d4ecf8b42')
-    
-    # try:
-    #   time.sleep(100)
-    # except KeyboardInterrupt:
-    #     frapi.end_transmissions()
-
-    stream = VideoStream()
-    video = stream.read_video_stream('config.json')
+    frapi = FrapiClient('config/config.json')
 
     try:
         while True:
-            frame = video.get_next_frame()
-            if frame is None:
-                video.close()
-                break
-            cv2.imshow('test', frame)
-            cv2.waitKey(1)
-            
+            time.sleep(0.1)
+
     except KeyboardInterrupt:
-        video.close()
+        frapi.end_transmissions()
 
     
 

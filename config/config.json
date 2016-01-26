@@ -12,7 +12,9 @@
 	{
 		"api_key": "35cac5b9593ff5ebc71b311d4ecf8b42",
 		"ip": "localhost",
-		"port": 4444
+		"port": 4444,
+		"json_node_frames": 5,
+		"json_dir": "./out_json"
 	}
 	
 }
