@@ -4,7 +4,7 @@ from threading import Thread
 
 class FrapiClient():
 
-    def __init__(self):
+    def __init__(self, config_name):
         self.ioloop = ioloop.IOLoop.instance()
         self.streams = []
         self.window_name = []
@@ -17,12 +17,42 @@ class FrapiClient():
         t = Thread(target = ioloop_fun, args = (self,))
         t.start()
 
+        with open(config_name) as data_file:    
+            config_data = json.load(data_file)
 
-    def transmit(self, window_name, config_name, ws_url):
-        self.window_name.append(window_name)
+        self.ip = config_data['frapi']['ip']
+        self.port = config_data['frapi']['port']
+        self.api_key = config_data['frapi']['api_key']
+
+        if self.ip is None:
+            print('ERROR: Missing ip of the FrAPI server.')
+            return
+
+        if self.port is None:
+            print('ERROR: Missing port of the FrAPI server.')
+            return
+        else:
+            self.port = str(self.port)
+
+        if self.api_key is None:
+            print('ERROR: Missing api_key of the FrAPI server.')
+            return
+
+
+        for i in range(0, len(config_data['testSequences'])):
+            self.transmit(config_data['testSequences'][i])
+
+
+    def transmit(self, config_data):
+        label = config_data['label']
+        if label is None:
+            label = 'Stream_'+str(len(self.streams)+1)
+
+        self.window_name.append(label)
         stream_id = len(self.window_name)-1
         stream = StreamVideo()
-        stream.config(config_name, ws_url, stream_id, self)
+        ws_url = 'ws://' + self.ip + ':' + self.port + '/recognize?api_key=' + self.api_key
+        stream.config(config_data, ws_url, stream_id, self)
         self.streams.append(stream)
 
 

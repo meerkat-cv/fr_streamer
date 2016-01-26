@@ -34,9 +34,9 @@ class StreamVideo(WebSocketClient):
         self.time_out_stream = ioloop.IOLoop().instance().add_timeout(deadline, self.close)
 
     
-    def config(self, config_name, ws_url, stream_id, client):
+    def config(self, config_data, ws_url, stream_id, client):
         stream = VideoStream()
-        self.video = stream.read_video_stream(config_name)
+        self.video = stream.read_video_stream(config_data)
         self.client = client
         self.stream_id = stream_id
         if self.video.isOpened() == False:
