@@ -12,13 +12,13 @@ class StreamVideo(WebSocketClient):
         self.request_timeout = DEFAULT_REQUEST_TIMEOUT
         self.time_out_stream = None
         self.original_frame = None
-        self.stream_id = -1
+        self.stream_label = None
         self.closing = False
         
 
     def _on_message(self, msg):
         ores = json.loads(msg)
-        self.client.on_message(self.original_frame, ores, self.stream_id)
+        self.client.on_message(self.original_frame, ores, self.stream_label)
         if self.closing == True:
             self.close()
         else:
@@ -34,11 +34,11 @@ class StreamVideo(WebSocketClient):
         self.time_out_stream = ioloop.IOLoop().instance().add_timeout(deadline, self.close)
 
     
-    def config(self, config_data, ws_url, stream_id, client):
+    def config(self, config_data, ws_url, stream_label, client):
         stream = VideoStream()
         self.video = stream.read_video_stream(config_data)
         self.client = client
-        self.stream_id = stream_id
+        self.stream_label = stream_label
         if self.video.isOpened() == False:
             print('problem opening', stream_path)
             return
@@ -61,7 +61,7 @@ class StreamVideo(WebSocketClient):
 
 
     def _on_connection_close(self):
-        print('Closing connection of stream_id', self.stream_id)
+        print('Closing connection of stream', self.stream_label)
         if self.time_out_stream is not None:
             ioloop.IOLoop().instance().remove_timeout(self.time_out_stream)
 

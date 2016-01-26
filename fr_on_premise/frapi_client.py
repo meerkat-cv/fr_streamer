@@ -6,9 +6,10 @@ class FrapiClient():
 
     def __init__(self, config_name):
         self.ioloop = ioloop.IOLoop.instance()
-        self.streams = []
-        self.stream_results = []
-        self.window_name = []
+        self.streams = {}
+        self.stream_results = {}
+        self.num_streams = 0
+        
         def ioloop_fun(self):
             try:
                 ioloop.IOLoop.instance().start()
@@ -52,37 +53,34 @@ class FrapiClient():
 
 
     def transmit(self, config_data):
-        label = config_data['label']
-        if label is None:
-            label = 'Stream_'+str(len(self.streams)+1)
+        label = self.get_stream_label(config_data)
+        self.stream_results[label] = []
+        self.num_streams = self.num_streams + 1
 
-        self.window_name.append(label)
-        self.stream_results.append([])
-        stream_id = len(self.window_name)-1
         stream = StreamVideo()
         ws_url = 'ws://' + self.ip + ':' + self.port + '/recognize?api_key=' + self.api_key
-        stream.config(config_data, ws_url, stream_id, self)
-        self.streams.append(stream)
+        stream.config(config_data, ws_url, label, self)
+        self.streams[label] = stream
 
 
-    def on_message(self, image, ores, stream_id):
+    def on_message(self, image, ores, stream_label):
         if image is not None and 'people' in ores:
-            self.plot_recognition_info(image, ores, stream_id)
+            self.plot_recognition_info(image, ores, stream_label)
 
-            self.stream_results[stream_id].append(ores)
-            if len(self.stream_results[stream_id]) >= self.json_node_frames:
-                self.post_results(stream_id)
+            self.stream_results[stream_label].append(ores)
+            if len(self.stream_results[stream_label]) >= self.json_node_frames:
+                self.post_results(stream_label)
 
 
-    def post_results(self, stream_id):
-        file_name = self.window_name[stream_id]+'_'+str(time.time())+'.json'
+    def post_results(self, stream_label):
+        file_name = stream_label+'_'+str(time.time())+'.json'
         with open(self.json_dir+'/'+file_name, 'w') as fp:
-            json.dump(self.stream_results[stream_id], fp, indent=4, separators=(',', ': '))
+            json.dump(self.stream_results[stream_label], fp, indent=4, separators=(',', ': '))
 
-        self.stream_results[stream_id].clear()
+        self.stream_results[stream_label].clear()
 
 
-    def plot_recognition_info(self, image, ores, stream_id):
+    def plot_recognition_info(self, image, ores, stream_label):
         for rec in ores['people']:
             l = rec['top_left']['x']
             t = rec['top_left']['y']
@@ -100,8 +98,28 @@ class FrapiClient():
             cv2.rectangle(image, (text_pt[0], text_pt[1]-text_size[1]-4), (text_pt[0] + text_size[0], text_pt[1]+4), (165, 142, 254), -1)
             cv2.putText(image, label, text_pt, font_face, 1, (255, 255, 255), 2)
 
-        cv2.imshow(self.window_name[stream_id], image)
+        cv2.imshow(stream_label, image)
         cv2.waitKey(1)
+
+
+    def get_stream_label(self, config_data):
+        label = config_data['label']
+
+        if label is None:
+            label = 'Stream_'+str(self.get_stream_id())
+            print('Error: label not defined. Seting to', label)
+        if label in self.streams:
+            label = 'Stream_'+str(self.get_stream_id())
+            print('Error: label already defined. Seting to', label)
+
+        return label
+
+
+    def get_stream_id(self):
+        if self.num_streams > pow(2,30):
+            self.num_streams = 0;
+        
+        return self.num_streams
         
 
     def end_transmissions(self):
