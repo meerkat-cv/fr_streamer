@@ -9,9 +9,15 @@ class FrapiClient():
         self.streams = {}
         self.stream_results = {}
         self.num_streams = 0
-        
-        with open(config_name) as data_file:    
-            config_data = json.load(data_file)
+
+        try:
+            with open(config_name) as data_file:    
+                config_data = json.load(data_file)
+        except:
+            print('ERROR: problem opening config', config_name)
+            return
+
+        self.config_data = config_data
 
         self.ip = config_data['frapi']['ip']
         self.port = config_data['frapi']['port']
@@ -41,6 +47,10 @@ class FrapiClient():
 
         for i in range(0, len(config_data['testSequences'])):
             self.transmit(config_data['testSequences'][i])
+
+
+    def get_config_data(self):
+        return self.config_data
 
 
     def transmit(self, config_data):
