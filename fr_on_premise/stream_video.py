@@ -19,7 +19,7 @@ class StreamVideo(WebSocketClient):
 
     def _on_message(self, msg):
         if self.closing == True:
-            self.close()
+            return
         else:
             ores = json.loads(msg)
             self.client.on_message(self.original_frame, ores, self.stream_label)

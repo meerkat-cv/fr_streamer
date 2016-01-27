@@ -58,7 +58,7 @@ class FrapiClient():
         if stream_label not in self.streams:
             print('Stream', stream_label, 'already closed.')
             return
-        if image is not None and 'people' in ores:
+        if image is not None and 'people' in ores and stream_label in self.stream_results:
             self.plot_recognition_info(image, ores, stream_label)
 
             self.stream_results[stream_label].append(ores)
@@ -120,14 +120,19 @@ class FrapiClient():
         
 
     def end_transmission(self, stream_label):
+        print('end_transmission', stream_label)
         self.streams[stream_label].close()
-        cv2.destroyWindow(stream_label)
+        del self.streams[stream_label]
+        del self.stream_results[stream_label]
+        self.num_streams = self.num_streams - 1
+
+        cv2.destroyAllWindows()
         cv2.waitKey(1)
 
 
     def end_transmissions(self):
-        for s in self.streams:
-            s.close()
+        keys = list(self.streams.keys())
+
+        for k in keys:
+            self.end_transmission(k)
         
-
-
