@@ -18,13 +18,12 @@ class FrapiClient():
         t.start()
 
 
-    def transmit(self, window_name, video_name, ws_url):
+    def transmit(self, window_name, config_name, ws_url):
         self.window_name.append(window_name)
         stream_id = len(self.window_name)-1
         stream = StreamVideo()
-        stream.config(video_name, ws_url, stream_id, self)
+        stream.config(config_name, ws_url, stream_id, self)
         self.streams.append(stream)
-
 
 
     def on_message(self, image, ores, stream_id):
@@ -50,14 +49,13 @@ class FrapiClient():
             cv2.rectangle(image, (text_pt[0], text_pt[1]-text_size[1]-4), (text_pt[0] + text_size[0], text_pt[1]+4), (165, 142, 254), -1)
             cv2.putText(image, label, text_pt, font_face, 1, (255, 255, 255), 2)
 
-
         cv2.imshow(self.window_name[stream_id], image)
         cv2.waitKey(1)
         
-
 
     def end_transmissions(self):
         for s in self.streams:
             s.close()
         
+
 

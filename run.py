@@ -1,16 +1,34 @@
 from tornado import ioloop
 from fr_on_premise.frapi_client import FrapiClient
+from fr_on_premise.video_stream import VideoStream
 import time
+import cv2
 
 def main():
-    frapi = FrapiClient()
-    frapi.transmit('Fickel', '/home/guilherme/meerkat/datasets/meerkat_friends/guilherme_training.avi', 'ws://localhost:4444/recognize?api_key=15220085839d05fdc0bb28bd0f90732e')
-    frapi.transmit('Obama', '/home/guilherme/obama.mp4', 'ws://localhost:4444/recognize?api_key=15220085839d05fdc0bb28bd0f90732e')
+    # frapi = FrapiClient()
+    # frapi.transmit('Fickel', 'config.json', 'ws://localhost:4444/recognize?api_key=35cac5b9593ff5ebc71b311d4ecf8b42')
+    # # frapi.transmit('Obama', 'config_obama.json', 'ws://localhost:4444/recognize?api_key=35cac5b9593ff5ebc71b311d4ecf8b42')
     
+    # try:
+    #   time.sleep(100)
+    # except KeyboardInterrupt:
+    #     frapi.end_transmissions()
+
+    stream = VideoStream()
+    video = stream.read_video_stream('config.json')
+
     try:
-    	time.sleep(100)
+        while True:
+            frame = video.get_next_frame()
+            if frame is None:
+                video.close()
+                break
+            cv2.imshow('test', frame)
+            cv2.waitKey(1)
+            
     except KeyboardInterrupt:
-        frapi.end_transmissions()
+        video.close()
+
     
 
 if __name__ == '__main__':
