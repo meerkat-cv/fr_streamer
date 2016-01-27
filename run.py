@@ -3,31 +3,37 @@ from fr_on_premise.frapi_client import FrapiClient
 from fr_on_premise.video_stream import VideoStream
 import time
 import cv2
+from threading import Thread
 
 def main():
-    # frapi = FrapiClient()
-    # frapi.transmit('Fickel', 'config.json', 'ws://localhost:4444/recognize?api_key=35cac5b9593ff5ebc71b311d4ecf8b42')
-    # # frapi.transmit('Obama', 'config_obama.json', 'ws://localhost:4444/recognize?api_key=35cac5b9593ff5ebc71b311d4ecf8b42')
-    
-    # try:
-    #   time.sleep(100)
-    # except KeyboardInterrupt:
-    #     frapi.end_transmissions()
+    frapi = FrapiClient('config/config.json')
 
-    stream = VideoStream()
-    video = stream.read_video_stream('config.json')
+    def t_fun():
+        try:
+            time.sleep(1)
+            start = time.time()
+            obama_closed = False
+            while True:
+                time.sleep(0.1)
+
+                if time.time()-start > 5 and obama_closed == False:
+                    print('Ending transmission of Obama')
+                    frapi.end_transmission('Obama')
+                    obama_closed = True
+
+
+        except KeyboardInterrupt:
+            frapi.end_transmissions()
+
+    t = Thread(target=t_fun)
+    t.start()
 
     try:
-        while True:
-            frame = video.get_next_frame()
-            if frame is None:
-                video.close()
-                break
-            cv2.imshow('test', frame)
-            cv2.waitKey(1)
-            
+        ioloop.IOLoop.instance().start()
     except KeyboardInterrupt:
-        video.close()
+        self.end_transmissions()
+
+
 
     
 

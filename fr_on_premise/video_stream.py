@@ -14,22 +14,24 @@ class VideoStream():
         self.end_frame = -1
         
 
-    def read_video_stream(self, config_file):
-        with open(config_file) as data_file:    
-            data = json.load(data_file)
+    def read_video_stream(self, config_data):
+        if config_data.get('video_file') is not None:
+            return VideoFile(config_data)
 
-        pprint(data)
+        if config_data.get('image_dir') is not None:
+            return ImageDir(config_data)
 
-        if data.get('video_file') is not None:
-            return VideoFile(data)
-
-        if data.get('image_dir') is not None:
-            return ImageDir(data)
-
-        if data.get('camera_url') is not None:
-            return CameraUrl(data)
+        if config_data.get('camera_url') is not None:
+            return CameraUrl(config_data)
 
         print('VideoStream input type not valid.')
+
+
+    def read_video_stream_config_file(self, config_file):
+        with open(config_file) as data_file:    
+            config_data = json.load(data_file)
+
+        self.read_video_stream(config_data)
 
 
     def get_next_frame(self):
