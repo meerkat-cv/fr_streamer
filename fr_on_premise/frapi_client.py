@@ -10,15 +10,6 @@ class FrapiClient():
         self.stream_results = {}
         self.num_streams = 0
         
-        def ioloop_fun(self):
-            try:
-                ioloop.IOLoop.instance().start()
-            except KeyboardInterrupt:
-                self.end_transmissions()
-
-        t = Thread(target = ioloop_fun, args = (self,))
-        t.start()
-
         with open(config_name) as data_file:    
             config_data = json.load(data_file)
 
@@ -64,16 +55,22 @@ class FrapiClient():
 
 
     def on_message(self, image, ores, stream_label):
+        if stream_label not in self.streams:
+            print('Stream', stream_label, 'already closed.')
+            return
         if image is not None and 'people' in ores:
             self.plot_recognition_info(image, ores, stream_label)
 
             self.stream_results[stream_label].append(ores)
             if len(self.stream_results[stream_label]) >= self.json_node_frames:
                 self.post_results(stream_label)
-
+        
 
     def post_results(self, stream_label):
         file_name = stream_label+'_'+str(time.time())+'.json'
+        if stream_label not in self.streams:
+            print('Stream', stream_label, 'already closed.')
+            return
         with open(self.json_dir+'/'+file_name, 'w') as fp:
             json.dump(self.stream_results[stream_label], fp, indent=4, separators=(',', ': '))
 
@@ -121,6 +118,12 @@ class FrapiClient():
         
         return self.num_streams
         
+
+    def end_transmission(self, stream_label):
+        self.streams[stream_label].close()
+        cv2.destroyWindow(stream_label)
+        cv2.waitKey(1)
+
 
     def end_transmissions(self):
         for s in self.streams:

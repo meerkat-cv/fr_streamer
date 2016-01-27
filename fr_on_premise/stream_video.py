@@ -1,9 +1,10 @@
 from fr_on_premise.websocket_client import *
 from fr_on_premise.video_stream import VideoStream
-import functools
+from functools import partial
 import json
 import time
 import cv2
+
 
 class StreamVideo(WebSocketClient):
 
@@ -17,11 +18,11 @@ class StreamVideo(WebSocketClient):
         
 
     def _on_message(self, msg):
-        ores = json.loads(msg)
-        self.client.on_message(self.original_frame, ores, self.stream_label)
         if self.closing == True:
             self.close()
         else:
+            ores = json.loads(msg)
+            self.client.on_message(self.original_frame, ores, self.stream_label)
             self.call_stream()
 
 
@@ -50,20 +51,29 @@ class StreamVideo(WebSocketClient):
         """Send message to the server
         :param str data: message.
         """
-        if not self._ws_connection:
-            raise RuntimeError('Web socket connection is closed.')
+        if not self._ws_connection or self.closing:
+            return
 
         self._ws_connection.write_message(data, binary=True)
 
 
-    def _on_connection_success(self):
-        self.stream()
+    def close(self):
+        """Close connection.
+        """
 
+        if not self._ws_connection:
+            raise RuntimeError('Web socket connection is already closed.')
 
-    def _on_connection_close(self):
         print('Closing connection of stream', self.stream_label)
+        self.closing = True
         if self.time_out_stream is not None:
             ioloop.IOLoop().instance().remove_timeout(self.time_out_stream)
+
+        self._ws_connection.close()
+
+
+    def _on_connection_success(self):
+        self.stream()
 
 
     @gen.coroutine
@@ -75,6 +85,8 @@ class StreamVideo(WebSocketClient):
             return
 
         frame = cv2.cvtColor(self.original_frame, cv2.COLOR_BGR2GRAY)
-        _, framecomp = cv2.imencode('.jpg', self.original_frame)
+        _, framecomp = cv2.imencode('.jpg', frame)
 
-        self.send(framecomp.tobytes())
+        # the function to write back on the websocket must be executed on
+        # the ioloop thread, which is why i'm using IOLoop.instance()
+        res = ioloop.IOLoop.instance().add_callback(partial(self.send, framecomp.tobytes()))
