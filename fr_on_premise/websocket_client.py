@@ -1,6 +1,3 @@
-"""Simple Web socket client implementation using Tornado framework.
-"""
-
 from tornado import escape
 from tornado import gen
 from tornado import httpclient
@@ -11,12 +8,13 @@ from tornado import websocket
 import functools
 import json
 import time
+import cv2
 
 
 APPLICATION_JSON = 'application/json'
 
-DEFAULT_CONNECT_TIMEOUT = 60
-DEFAULT_REQUEST_TIMEOUT = 60
+DEFAULT_CONNECT_TIMEOUT = 10
+DEFAULT_REQUEST_TIMEOUT = 10
 
  
 class WebSocketClient():
@@ -47,10 +45,11 @@ class WebSocketClient():
         """Send message to the server
         :param str data: message.
         """
+
         if not self._ws_connection:
             raise RuntimeError('Web socket connection is closed.')
 
-        self._ws_connection.write_message(data, binary=True)
+        self._ws_connection.write_message(escape.utf8(json.dumps(data)))
 
     def close(self):
         """Close connection.
@@ -83,7 +82,6 @@ class WebSocketClient():
         """This is called when new message is available from the server.
         :param str msg: server message.
         """
-
         pass
 
     def _on_connection_success(self):
@@ -103,4 +101,3 @@ class WebSocketClient():
         """
 
         pass
-
