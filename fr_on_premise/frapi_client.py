@@ -137,10 +137,14 @@ class FrapiClient():
         if stream_label not in self.streams:
             return
 
-        print('end_transmission', stream_label)
         if not close_from_socket:
             self.streams[stream_label].close()
-            
+            # if I'm closing from the frapi_client, I will enter in
+            # this function again, called by stream.close(). So I'm
+            # returning now, and when stream.close() call me again, 
+            # the rest of the closing process will continue.
+            return
+
         del self.streams[stream_label]
         del self.stream_results[stream_label]
         self.num_streams = self.num_streams - 1
@@ -153,5 +157,5 @@ class FrapiClient():
         keys = list(self.streams.keys())
 
         for k in keys:
-            self.end_transmission(k)
+            self.end_transmission(k, close_from_socket = False)
         
