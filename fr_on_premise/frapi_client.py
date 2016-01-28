@@ -133,9 +133,14 @@ class FrapiClient():
         return self.num_streams
         
 
-    def end_transmission(self, stream_label):
+    def end_transmission(self, stream_label, close_from_socket):
+        if stream_label not in self.streams:
+            return
+
         print('end_transmission', stream_label)
-        self.streams[stream_label].close()
+        if not close_from_socket:
+            self.streams[stream_label].close()
+            
         del self.streams[stream_label]
         del self.stream_results[stream_label]
         self.num_streams = self.num_streams - 1

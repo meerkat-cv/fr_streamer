@@ -55,7 +55,7 @@ class WebSocketClient():
     def close(self):
         """Close connection.
         """
-
+        
         if not self._ws_connection:
             raise RuntimeError('Web socket connection is already closed.')
 
@@ -94,7 +94,7 @@ class WebSocketClient():
     def _on_connection_close(self):
         """This is called when server closed the connection.
         """
-        pass
+        self.close()
 
     def _on_connection_error(self, exception):
         """This is called in case if connection to the server could
