@@ -1,12 +1,12 @@
-from fr_on_premise.websocket_client import *
-from fr_on_premise.video_stream import VideoStream
+from fr_on_premise.base_websocket_client import *
+from fr_on_premise import video_stream
 from functools import partial
 import json
 import time
 import cv2
 
 
-class StreamVideo(WebSocketClient):
+class WebSocketFrapi(WebSocketClient):
 
     def __init__(self):
         self.connect_timeout = DEFAULT_CONNECT_TIMEOUT
@@ -36,8 +36,7 @@ class StreamVideo(WebSocketClient):
 
     
     def config(self, config_data, ws_url, stream_label, client):
-        stream = VideoStream()
-        self.video = stream.read_video_stream(config_data)
+        self.video = video_stream.load_from_config(config_data)
         self.client = client
         self.stream_label = stream_label
         if self.video.isOpened() == False:

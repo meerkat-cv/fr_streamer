@@ -6,6 +6,22 @@ from pprint import pprint
 from threading import Thread
 
 
+def load_from_config(config_data):
+    """ 
+    This functions is like a constructor from the config that will
+    return the appropirated VideoStream.
+    """
+    if 'video_file' in config_data:
+        return VideoFile(config_data)
+    if 'image_dir' in config_data:
+        return ImageDir(config_data)
+    if 'camera_url' in config_data:
+        return CameraUrl(config_data)
+
+    print('VideoStream input type not valid.')
+
+
+
 class VideoStream():
 
     def __init__(self):
@@ -13,19 +29,6 @@ class VideoStream():
         self.curr_frame = 0
         self.end_frame = -1
         
-
-    def read_video_stream(self, config_data):
-        if config_data.get('video_file') is not None:
-            return VideoFile(config_data)
-
-        if config_data.get('image_dir') is not None:
-            return ImageDir(config_data)
-
-        if config_data.get('camera_url') is not None:
-            return CameraUrl(config_data)
-
-        print('VideoStream input type not valid.')
-
 
     def read_video_stream_config_file(self, config_file):
         with open(config_file) as data_file:    

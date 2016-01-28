@@ -1,6 +1,9 @@
-from fr_on_premise.stream_video import *
+from fr_on_premise import websocket_frapi
 from tornado import ioloop
 from threading import Thread
+import json
+import cv2
+import time
 
 class FrapiClient():
 
@@ -10,12 +13,13 @@ class FrapiClient():
         self.stream_results = {}
         self.num_streams = 0
 
-        try:
-            with open(config_name) as data_file:    
-                config_data = json.load(data_file)
-        except:
-            print('ERROR: problem opening config', config_name)
-            return
+        # try:
+        with open(config_name) as data_file:    
+            config_data = json.load(data_file)
+        # except:
+        #     print('asfasdf')
+        #     print('ERROR: problem opening config', config_name)
+        #     return
 
         self.config_data = config_data
 
@@ -58,10 +62,10 @@ class FrapiClient():
         self.stream_results[label] = []
         self.num_streams = self.num_streams + 1
 
-        stream = StreamVideo()
+        ws_stream = websocket_frapi.WebSocketFrapi()
         ws_url = 'ws://' + self.ip + ':' + self.port + '/recognize?api_key=' + self.api_key
-        stream.config(config_data, ws_url, label, self)
-        self.streams[label] = stream
+        ws_stream.config(config_data, ws_url, label, self)
+        self.streams[label] = ws_stream
 
 
     def on_message(self, image, ores, stream_label):

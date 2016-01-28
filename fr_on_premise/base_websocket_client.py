@@ -18,7 +18,8 @@ DEFAULT_REQUEST_TIMEOUT = 10
 
  
 class WebSocketClient():
-    """Base for web socket clients.
+    """
+    Base for web socket clients.
     """
  
     def __init__(self, *, connect_timeout=DEFAULT_CONNECT_TIMEOUT,
