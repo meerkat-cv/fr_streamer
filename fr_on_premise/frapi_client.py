@@ -4,13 +4,15 @@ from threading import Thread
 import json
 import cv2
 import time
+import requests, logging
+from io import StringIO
+from requests_toolbelt import MultipartEncoder
 
 class FrapiClient():
 
     def __init__(self, config_name):
         self.ioloop = ioloop.IOLoop.instance()
         self.streams = {}
-        self.stream_results = {}
         self.num_streams = 0
 
         # try:
@@ -26,8 +28,11 @@ class FrapiClient():
         self.ip = config_data['frapi']['ip']
         self.port = config_data['frapi']['port']
         self.api_key = config_data['frapi']['api_key']
-        self.json_node_frames = config_data['frapi']['json_node_frames']
-        self.json_dir = config_data['frapi']['json_dir']
+
+        self.save_json_config = config_data['frapi']['output']['json']
+        self.http_post_config = config_data['frapi']['output']['http_post']
+        # self.json_node_frames = config_data['frapi']['json_node_frames']
+        # self.json_dir = config_data['frapi']['json_dir']
 
         if self.ip is None:
             print('ERROR: Missing ip of the FrAPI server.')
@@ -43,11 +48,23 @@ class FrapiClient():
             print('ERROR: Missing api_key of the FrAPI server.')
             return
 
-        if self.json_node_frames is None:
-            self.json_node_frames = 15
+        if self.save_json_config is not None:
+            self.stream_results_batch = {}
+            
+            if self.save_json_config['dir'] is None:
+                self.save_json_config['dir'] = './out_json/'
+            
+            if self.save_json_config['node_frames'] is None:
+                self.save_json_config['node_frames'] = 15
 
-        if self.json_dir is None:
-            self.json_dir = './out_json/'
+        if self.http_post_config is not None:
+            if self.http_post_config['url'] is None:
+                logging.error('Need to inform HTTP Post route if http-post was selected as output.')
+                return
+
+            if self.http_post_config['post_image'] is None:
+                self.http_post_config['post_image'] = False
+            
 
         for i in range(0, len(config_data['testSequences'])):
             self.transmit(config_data['testSequences'][i])
@@ -59,7 +76,7 @@ class FrapiClient():
 
     def transmit(self, config_data):
         label = self.get_stream_label(config_data)
-        self.stream_results[label] = []
+        self.stream_results_batch[label] = []
         self.num_streams = self.num_streams + 1
 
         ws_stream = websocket_frapi.WebSocketFrapi()
@@ -72,23 +89,47 @@ class FrapiClient():
         if stream_label not in self.streams:
             print('Stream', stream_label, 'already closed.')
             return
-        if image is not None and 'people' in ores and stream_label in self.stream_results:
-            self.plot_recognition_info(image, ores, stream_label)
+        
+        if image is not None and 'people' in ores and stream_label in self.stream_results_batch:
+            debug_image = self.plot_recognition_info(image, ores, stream_label)
 
-            self.stream_results[stream_label].append(ores)
-            if len(self.stream_results[stream_label]) >= self.json_node_frames:
-                self.post_results(stream_label)
+
+            # the output is only activate if there is someone recognized.
+            if self.save_json_config is not None:
+                self.stream_results_batch[stream_label].append(ores)
+                if len(self.stream_results_batch[stream_label]) >= self.save_json_config['node_frames']:
+                    self.save_json_results(stream_label)
+            if self.http_post_config is not None and len(ores['people']) > 0:
+                self.post_result(ores, debug_image)
+
+    def post_result(self, result, debug_image):
+        """
+        This function posts the result that is passed to the configurated
+        function. If no image is required it is a application/json payload,
+        otherwise is a multiform/data.
+        """
+        try:
+            if not self.http_post_config['post_image']:
+                requests.post(self.http_post_config['url'], data=json.dumps(result), headers={'Content-type': 'application/json'})
+            else:
+                cv2.imwrite('debug_image.jpg', debug_image)
+                m = MultipartEncoder(fields={'image': ('filename', open('debug_image.jpg', 'rb')), 
+                                         'recognition': json.dumps(result)})
+                res = requests.post(self.http_post_config['url'], data=m, 
+                        headers={'Content-Type': m.content_type})
+        except:
+            logging.warn('Post result to url'+self.http_post_config['url']+' failed!');
         
 
-    def post_results(self, stream_label):
+    def save_json_results(self, stream_label):
         file_name = stream_label+'_'+str(time.time())+'.json'
         if stream_label not in self.streams:
             print('Stream', stream_label, 'already closed.')
             return
-        with open(self.json_dir+'/'+file_name, 'w') as fp:
-            json.dump(self.stream_results[stream_label], fp, indent=4, separators=(',', ': '))
+        with open(self.save_json_config['dir']+'/'+file_name, 'w') as fp:
+            json.dump(self.stream_results_batch[stream_label], fp, indent=4, separators=(',', ': '))
 
-        self.stream_results[stream_label].clear()
+        self.stream_results_batch[stream_label].clear()
 
 
     def plot_recognition_info(self, image, ores, stream_label):
@@ -111,6 +152,7 @@ class FrapiClient():
 
         cv2.imshow(stream_label, image)
         cv2.waitKey(1)
+        return image
 
 
     def get_stream_label(self, config_data):
@@ -146,7 +188,7 @@ class FrapiClient():
             return
 
         del self.streams[stream_label]
-        del self.stream_results[stream_label]
+        del self.stream_results_batch[stream_label]
         self.num_streams = self.num_streams - 1
 
         cv2.destroyAllWindows()

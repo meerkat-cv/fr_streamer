@@ -10,8 +10,17 @@
 		"api_key": "e1abeb1d85b397894ff1b0f84494abfb",
 		"ip": "localhost",
 		"port": 4444,
-		"json_node_frames": 5,
-		"json_dir": "./out_json"
+		"output": {
+			"json": {
+				"node_frames": 5,
+				"dir": "./out_json"
+			},
+			"http_post": {
+				"url": "http://localhost:5000/test_premise_post",
+				"post_image": true
+			}
+		}
+		
 	}
 	
 }
