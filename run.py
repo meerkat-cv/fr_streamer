@@ -31,7 +31,7 @@ def main():
     try:
         ioloop.IOLoop.instance().start()
     except KeyboardInterrupt:
-        self.end_transmissions()
+        frapi.end_transmissions()
 
 
 
