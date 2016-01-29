@@ -12,11 +12,11 @@
 		"port": 4444,
 		"output": {
 			"json": {
-				"json_node_frames": 5,
-				"json_dir": "./out_json"
+				"node_frames": 5,
+				"dir": "./out_json"
 			},
 			"http_post": {
-				"url": "http://localhost:3333/test_premise_post",
+				"url": "http://localhost:5000/test_premise_post",
 				"post_image": true
 			}
 		}
