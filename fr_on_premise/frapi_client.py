@@ -10,11 +10,13 @@ from requests_toolbelt import MultipartEncoder
 
 class FrapiClient():
 
-    def __init__(self, config_name):
+    def __init__(self):
         self.ioloop = ioloop.IOLoop.instance()
         self.streams = {}
         self.num_streams = 0
 
+
+    def config(self, config_name):
         # try:
         with open(config_name) as data_file:    
             config_data = json.load(data_file)

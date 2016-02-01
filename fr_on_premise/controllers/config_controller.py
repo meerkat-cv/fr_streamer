@@ -6,11 +6,12 @@ from fr_on_premise.frapi_client import FrapiClient
 
 class ConfigController():
 	def __init__(self):
-		self.frapi_client = FrapiClient('config/config.json')
+		self.frapi_client = FrapiClient()
 
 
 	def change_config(self):
 		print('changing config')
+		self.frapi_client.config('config/config.json')
 		ok = True
 		error = None
 
