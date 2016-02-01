@@ -68,6 +68,7 @@ class WebSocketFrapi(WebSocketClient):
         if self.time_out_stream is not None:
             ioloop.IOLoop().instance().remove_timeout(self.time_out_stream)
 
+        self.video.close()
         self._ws_connection.close()
         self.client.end_transmission(self.stream_label, close_from_socket = True)
 
