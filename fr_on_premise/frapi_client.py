@@ -14,9 +14,14 @@ class FrapiClient():
         self.ioloop = ioloop.IOLoop.instance()
         self.streams = {}
         self.num_streams = 0
+        self.config_data = None
 
 
     def config(self, config_name):
+        if self.config_data is not None:
+            self.update_config(config_name)
+            return
+
         # try:
         with open(config_name) as data_file:    
             config_data = json.load(data_file)
@@ -72,6 +77,57 @@ class FrapiClient():
             self.transmit(config_data['testSequences'][i])
 
 
+    def update_config(self, config_name):
+        with open(config_name) as data_file:    
+            config_data = json.load(data_file)
+
+        # if I have a major config change, just reset everything
+        if self.ip != config_data['frapi']['ip'] or self.port != str(config_data['frapi']['port']) or\
+            self.api_key != config_data['frapi']['api_key']:
+
+            self.config_data = None
+            self.config(config_name)
+            return
+
+        self.save_json_config = config_data['frapi']['output']['json']
+        self.http_post_config = config_data['frapi']['output']['http_post']
+        
+        if self.save_json_config is not None:
+            if self.save_json_config['dir'] is None:
+                self.save_json_config['dir'] = './out_json/'
+            
+            if self.save_json_config['node_frames'] is None:
+                self.save_json_config['node_frames'] = 15
+
+        if self.http_post_config is not None:
+            if self.http_post_config['url'] is None:
+                logging.error('Need to inform HTTP Post route if http-post was selected as output.')
+                return
+
+            if self.http_post_config['post_image'] is None:
+                self.http_post_config['post_image'] = False
+            
+
+        # find the streams that ended, and the ones that are new
+        list_removed = []
+        for old in self.config_data['testSequences']:
+            if old not in config_data['testSequences']:
+                list_removed.append(old)
+
+        list_added = []
+        for new_video in config_data['testSequences']:
+            if new_video not in self.config_data['testSequences']:
+                list_added.append(new_video)
+
+        for new_video in list_added:
+            self.transmit(new_video)
+
+        for old in list_removed:
+            self.end_transmission(old['label'], close_from_socket = False)
+
+        self.config_data = config_data
+
+
     def get_config_data(self):
         return self.config_data
 
@@ -106,7 +162,7 @@ class FrapiClient():
 
     def post_result(self, result, debug_image):
         """
-        This function posts the result that is passed to the configurated
+        This function posts the result that is passed to the configured
         function. If no image is required it is a application/json payload,
         otherwise is a multiform/data.
         """
