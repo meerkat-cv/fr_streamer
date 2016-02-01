@@ -9,10 +9,8 @@ class ConfigController():
 		self.frapi_client = FrapiClient()
 
 
-	def change_config(self):
-		print('changing config')
-		self.frapi_client.config('config/config.json')
-		ok = True
-		error = None
+	def change_config(self, config_data):
+		print('config_data', config_data)
+		(ok, error) = self.frapi_client.config(config_data)
 
 		return (ok, error)

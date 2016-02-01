@@ -42,8 +42,8 @@ def main():
     ConfigView.register(app)
     
     # app.wsgi_app = ProxyFix(app.wsgi_app)
-    logging.basicConfig(
-        level=app.config["LOG_LEVEL"], format='%(asctime)s - %(levelname)s - %(message)s')
+    # logging.basicConfig(
+    #     level=app.config["LOG_LEVEL"], format='%(asctime)s - %(levelname)s - %(message)s')
 
     app.debug = app.config["APP_DEBUG"]
 

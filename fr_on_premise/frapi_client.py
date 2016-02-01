@@ -17,18 +17,10 @@ class FrapiClient():
         self.config_data = None
 
 
-    def config(self, config_name):
+    def config(self, config_data):
         if self.config_data is not None:
-            self.update_config(config_name)
+            self.update_config(config_data)
             return
-
-        # try:
-        with open(config_name) as data_file:    
-            config_data = json.load(data_file)
-        # except:
-        #     print('asfasdf')
-        #     print('ERROR: problem opening config', config_name)
-        #     return
 
         self.config_data = config_data
 
@@ -38,22 +30,17 @@ class FrapiClient():
 
         self.save_json_config = config_data['frapi']['output']['json']
         self.http_post_config = config_data['frapi']['output']['http_post']
-        # self.json_node_frames = config_data['frapi']['json_node_frames']
-        # self.json_dir = config_data['frapi']['json_dir']
-
+        
         if self.ip is None:
-            print('ERROR: Missing ip of the FrAPI server.')
-            return
+            return (False, 'Missing ip of the FrAPI server.')
 
         if self.port is None:
-            print('ERROR: Missing port of the FrAPI server.')
-            return
+            return (False, 'Missing port of the FrAPI server.')
         else:
             self.port = str(self.port)
 
         if self.api_key is None:
-            print('ERROR: Missing api_key of the FrAPI server.')
-            return
+            return (False, 'Missing api_key of the FrAPI server.')
 
         if self.save_json_config is not None:
             self.stream_results_batch = {}
@@ -67,7 +54,7 @@ class FrapiClient():
         if self.http_post_config is not None:
             if self.http_post_config['url'] is None:
                 logging.error('Need to inform HTTP Post route if http-post was selected as output.')
-                return
+                return (False, 'Need to inform HTTP Post route if http-post was selected as output.')
 
             if self.http_post_config['post_image'] is None:
                 self.http_post_config['post_image'] = False
@@ -76,18 +63,16 @@ class FrapiClient():
         for i in range(0, len(config_data['testSequences'])):
             self.transmit(config_data['testSequences'][i])
 
+        return (True, '')
 
-    def update_config(self, config_name):
-        with open(config_name) as data_file:    
-            config_data = json.load(data_file)
 
+    def update_config(self, config_data):
         # if I have a major config change, just reset everything
         if self.ip != config_data['frapi']['ip'] or self.port != str(config_data['frapi']['port']) or\
             self.api_key != config_data['frapi']['api_key']:
 
             self.config_data = None
-            self.config(config_name)
-            return
+            return self.config(config_data)
 
         self.save_json_config = config_data['frapi']['output']['json']
         self.http_post_config = config_data['frapi']['output']['http_post']
@@ -102,7 +87,7 @@ class FrapiClient():
         if self.http_post_config is not None:
             if self.http_post_config['url'] is None:
                 logging.error('Need to inform HTTP Post route if http-post was selected as output.')
-                return
+                return (False, 'Need to inform HTTP Post route if http-post was selected as output.')
 
             if self.http_post_config['post_image'] is None:
                 self.http_post_config['post_image'] = False
@@ -126,6 +111,8 @@ class FrapiClient():
             self.end_transmission(old['label'], close_from_socket = False)
 
         self.config_data = config_data
+
+        return (True, None)
 
 
     def get_config_data(self):
