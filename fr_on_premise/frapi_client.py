@@ -19,31 +19,43 @@ class FrapiClient():
         self.stream_temp_coherence = {}
         self.num_streams = 0
         self.config_data = None
+        self.save_json_config = None
+        self.http_post_config = None
+
+
+    def frapi_missing_config(self, config_data):
+        if config_data.get('frapi') is None:
+            return 'Missing frapi configuration.'
+
+        if config_data['frapi'].get('ip') is None:
+            return 'Missing ip of the FrAPI server.'
+
+        if config_data['frapi'].get('port') is None:
+            return 'Missing port of the FrAPI server.'
+        
+        if config_data['frapi'].get('api_key') is None:
+            return 'Missing api_key of the FrAPI server.'
 
 
     def config(self, config_data):
+        # make sure the config file is ok
+        try:
+            self.ip = config_data['frapi']['ip']
+            self.port = str(config_data['frapi']['port'])
+            self.api_key = config_data['frapi']['api_key']
+        except KeyError:
+            error = self.frapi_missing_config(frapi_cfg)
+            logging.error(error)
+            return (False, error)
+
         if self.config_data is not None:
             return self.update_config(config_data)
 
+        if config_data['frapi'].get('output') is not None:
+            self.save_json_config = config_data['frapi']['output'].get('json', None)
+            self.http_post_config = config_data['frapi']['output'].get('http_post', None)
+
         self.config_data = config_data
-
-        self.ip = config_data['frapi']['ip']
-        self.port = config_data['frapi']['port']
-        self.api_key = config_data['frapi']['api_key']
-
-        self.save_json_config = config_data['frapi']['output']['json']
-        self.http_post_config = config_data['frapi']['output']['http_post']
-        
-        if self.ip is None:
-            return (False, 'Missing ip of the FrAPI server.')
-
-        if self.port is None:
-            return (False, 'Missing port of the FrAPI server.')
-        else:
-            self.port = str(self.port)
-
-        if self.api_key is None:
-            return (False, 'Missing api_key of the FrAPI server.')
 
         if self.save_json_config is not None:
             self.stream_results_batch = {}
@@ -77,8 +89,9 @@ class FrapiClient():
             self.config_data = None
             return self.config(config_data)
 
-        self.save_json_config = config_data['frapi']['output']['json']
-        self.http_post_config = config_data['frapi']['output']['http_post']
+        if config_data['frapi'].get('output') is not None:
+            self.save_json_config = config_data['frapi']['output'].get('json', None)
+            self.http_post_config = config_data['frapi']['output'].get('http_post', None)
         
         if self.save_json_config is not None:
             if self.save_json_config['dir'] is None:
