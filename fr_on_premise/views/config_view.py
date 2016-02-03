@@ -49,11 +49,11 @@ class ConfigView(FlaskView):
 
         """
         (ok, error, config_data) = self.config_from_request(request)
-        if error:
+        if not ok:
             raise error_view.InvalidParametersError(error)
 
         (ok, error) = self.config.change_config(config_data)
-        if error:
+        if not ok:
             raise error_view.InternalError(error)
 
         return flask.jsonify({})
