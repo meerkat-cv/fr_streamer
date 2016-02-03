@@ -1,6 +1,7 @@
 from fr_on_premise import websocket_frapi
 from tornado import ioloop
 from threading import Thread
+from fr_on_premise.temp_coherence import TempCoherence
 import json
 import cv2
 import time
@@ -14,6 +15,8 @@ class FrapiClient():
         self.ioloop = ioloop.IOLoop.instance()
         self.streams = {}
         self.stream_plot = {}
+        self.stream_sliding_window = {}
+        self.stream_temp_coherence = {}
         self.num_streams = 0
         self.config_data = None
 
@@ -123,6 +126,9 @@ class FrapiClient():
         label = self.get_stream_label(config_data)
         self.stream_results_batch[label] = []
         self.stream_plot[label] = config_data.get('plotStream', False)
+        self.stream_sliding_window[label] = config_data.get('slidingWindow', 0)
+        if self.stream_sliding_window[label] > 0:
+            self.stream_temp_coherence = TempCoherence(self.stream_sliding_window[label])
         self.num_streams = self.num_streams + 1
 
         ws_stream = websocket_frapi.WebSocketFrapi()
@@ -142,11 +148,15 @@ class FrapiClient():
             if post_image or self.stream_plot[stream_label]:
                 debug_image = self.plot_recognition_info(image, ores, stream_label)
 
+            if self.stream_sliding_window[stream_label] > 1 and (self.save_json_config is not None or post_image):
+                ores = self.stream_temp_coherence[stream_label].add_frame(ores)
+
             # the output is only activate if there is someone recognized.
             if self.save_json_config is not None:
                 self.stream_results_batch[stream_label].append(ores)
                 if len(self.stream_results_batch[stream_label]) >= self.save_json_config['node_frames']:
                     self.save_json_results(stream_label)
+
             if post_image:
                 self.post_result(ores, debug_image)
 
