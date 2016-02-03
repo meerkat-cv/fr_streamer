@@ -126,9 +126,9 @@ class FrapiClient():
         label = self.get_stream_label(config_data)
         self.stream_results_batch[label] = []
         self.stream_plot[label] = config_data.get('plotStream', False)
-        self.stream_sliding_window[label] = config_data.get('slidingWindow', 0)
+        self.stream_sliding_window[label] = config_data.get('tempWindow', 0)
         if self.stream_sliding_window[label] > 0:
-            self.stream_temp_coherence = TempCoherence(self.stream_sliding_window[label])
+            self.stream_temp_coherence[label] = TempCoherence(self.stream_sliding_window[label])
         self.num_streams = self.num_streams + 1
 
         ws_stream = websocket_frapi.WebSocketFrapi()
@@ -149,7 +149,7 @@ class FrapiClient():
                 debug_image = self.plot_recognition_info(image, ores, stream_label)
 
             if self.stream_sliding_window[stream_label] > 1 and (self.save_json_config is not None or post_image):
-                ores = self.stream_temp_coherence[stream_label].add_frame(ores)
+                ores = self.stream_temp_coherence[stream_label].add_frame(ores, min_confidence=-0.8)
 
             # the output is only activate if there is someone recognized.
             if self.save_json_config is not None:

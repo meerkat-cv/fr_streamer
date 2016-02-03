@@ -6,10 +6,10 @@ class TempCoherence():
         self.past = temp_window/2 + 1
 
         self.labels = [[] for k in range(self.temp_window)]
-        costs = [[] for k in range(self.temp_window)]
+        self.costs = [[] for k in range(self.temp_window)]
 
 
-    def add_frame(ores):
+    def add_frame(self, ores, min_confidence):
         persons = [];
         (self.labels[self.last_pos], self.costs[self.last_pos]) = self.extract_info(ores)
         self.last_pos = (self.last_pos+1) % self.temp_window;
@@ -33,31 +33,26 @@ class TempCoherence():
                 people_count[len(curr_labels)] = people_count[len(curr_labels)] + 1
         
 
-        # num_people = 0
-        # for(auto it=people_count.begin(); it != people_count.end(); it++) {
-        #     if(it->second > past_ && it->first > num_people)
-        #         num_people = it->first;
-        # }
-        # if(num_people == 0)
-        #     return persons;
+        num_people = 0
+        for p_c in people_count:
+            num_people = num_people + p_c
 
-        # for(auto it = labels_count.begin(); it != labels_count.end(); it++) {
-        #     if(it->second > past_ && persons.size() < num_people) {
-        #         persons.push_back(it->first);
-        #     }
-        # }
-
-        # persons.resize(num_people, 0);
-
+        for labels_key in labels_count.keys():
+            num_labels = labels_count[labels_key]
+            if num_labels > self.past and len(persons) < num_people:
+                persons.append(labels_key)
+        
         return self.format_response(persons)
 
 
-    def format_response(persons):
+    def format_response(self, persons):
         detections = []
         for p in persons:
+            d = {}
             d['recognition'] = p
+            detections.append(d)
 
-        res = {'people', detections}
+        res = {'people': detections}
 
         return res
 
@@ -67,8 +62,8 @@ class TempCoherence():
         costs = []
 
         for people in ores['people']:
-            labels.append(ores['recognition']['predictedLabel'])
-            costs.append(ores['recognition']['confidence'])
+            labels.append(people['recognition']['predictedLabel'])
+            costs.append(people['recognition']['confidence'])
 
         return (labels, costs)
 
