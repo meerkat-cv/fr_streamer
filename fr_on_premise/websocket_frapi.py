@@ -77,6 +77,11 @@ class WebSocketFrapi(WebSocketClient):
         self.stream()
 
 
+    def _on_connection_error(self, exception):
+        self.video.close()
+        self.client.end_transmission(self.stream_label, close_from_socket = True)
+
+
     @gen.coroutine
     def stream(self):
         self.original_frame = self.video.get_next_frame()
