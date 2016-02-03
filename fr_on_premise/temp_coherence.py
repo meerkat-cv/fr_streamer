@@ -49,7 +49,7 @@ class TempCoherence():
         detections = []
         for p in persons:
             d = {}
-            d['recognition'] = p
+            d = {'recognition': {'predictedLabel': p}}
             detections.append(d)
 
         res = {'people': detections}
