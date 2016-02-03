@@ -92,6 +92,9 @@ class FrapiClient():
         if config_data['frapi'].get('output') is not None:
             self.save_json_config = config_data['frapi']['output'].get('json', None)
             self.http_post_config = config_data['frapi']['output'].get('http_post', None)
+        else:
+            self.save_json_config = None
+            self.http_post_config = None
         
         if self.save_json_config is not None:
             if self.save_json_config['dir'] is None:
