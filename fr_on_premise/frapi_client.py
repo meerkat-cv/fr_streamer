@@ -249,6 +249,8 @@ class FrapiClient():
 
         del self.streams[stream_label]
         del self.stream_results_batch[stream_label]
+        del self.stream_sliding_window[stream_label]
+        del self.stream_temp_coherence[stream_label]
         self.num_streams = self.num_streams - 1
 
         for seq in self.config_data['testSequences']:
