@@ -19,8 +19,7 @@ class FrapiClient():
 
     def config(self, config_data):
         if self.config_data is not None:
-            self.update_config(config_data)
-            return
+            return self.update_config(config_data)
 
         self.config_data = config_data
 
@@ -104,11 +103,11 @@ class FrapiClient():
             if new_video not in self.config_data['testSequences']:
                 list_added.append(new_video)
 
-        for new_video in list_added:
-            self.transmit(new_video)
-
         for old in list_removed:
             self.end_transmission(old['label'], close_from_socket = False)
+
+        for new_video in list_added:
+            self.transmit(new_video)
 
         self.config_data = config_data
 
@@ -235,6 +234,11 @@ class FrapiClient():
         del self.streams[stream_label]
         del self.stream_results_batch[stream_label]
         self.num_streams = self.num_streams - 1
+
+        for seq in self.config_data['testSequences']:
+            if seq['label'] == stream_label:
+                self.config_data['testSequences'].remove(seq)
+                break
 
         cv2.destroyAllWindows()
         cv2.waitKey(1)
