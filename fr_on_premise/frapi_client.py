@@ -13,6 +13,7 @@ class FrapiClient():
     def __init__(self):
         self.ioloop = ioloop.IOLoop.instance()
         self.streams = {}
+        self.stream_plot = {}
         self.num_streams = 0
         self.config_data = None
 
@@ -121,6 +122,7 @@ class FrapiClient():
     def transmit(self, config_data):
         label = self.get_stream_label(config_data)
         self.stream_results_batch[label] = []
+        self.stream_plot[label] = config_data.get('plotStream', False)
         self.num_streams = self.num_streams + 1
 
         ws_stream = websocket_frapi.WebSocketFrapi()
@@ -135,15 +137,17 @@ class FrapiClient():
             return
         
         if image is not None and 'people' in ores and stream_label in self.stream_results_batch:
-            debug_image = self.plot_recognition_info(image, ores, stream_label)
+            post_image = self.http_post_config is not None and len(ores['people']) > 0
 
+            if post_image or self.stream_plot[stream_label]:
+                debug_image = self.plot_recognition_info(image, ores, stream_label)
 
             # the output is only activate if there is someone recognized.
             if self.save_json_config is not None:
                 self.stream_results_batch[stream_label].append(ores)
                 if len(self.stream_results_batch[stream_label]) >= self.save_json_config['node_frames']:
                     self.save_json_results(stream_label)
-            if self.http_post_config is not None and len(ores['people']) > 0:
+            if post_image:
                 self.post_result(ores, debug_image)
 
     def post_result(self, result, debug_image):
@@ -194,8 +198,10 @@ class FrapiClient():
             cv2.rectangle(image, (text_pt[0], text_pt[1]-text_size[1]-4), (text_pt[0] + text_size[0], text_pt[1]+4), (165, 142, 254), -1)
             cv2.putText(image, label, text_pt, font_face, 1, (255, 255, 255), 2)
 
-        cv2.imshow(stream_label, image)
-        cv2.waitKey(1)
+        if self.stream_plot[stream_label]:
+            cv2.imshow(stream_label, image)
+            cv2.waitKey(1)
+
         return image
 
 
