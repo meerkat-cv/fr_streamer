@@ -76,7 +76,9 @@ class FrapiClient():
             
 
         for i in range(0, len(config_data['testSequences'])):
-            self.transmit(config_data['testSequences'][i])
+            (ok, error) = self.transmit(config_data['testSequences'][i])
+            if not ok:
+                logging.error(error)
 
         return (True, '')
 
@@ -127,7 +129,9 @@ class FrapiClient():
             self.end_transmission(old['label'], close_from_socket = False)
 
         for new_video in list_added:
-            self.transmit(new_video)
+            (ok, error) = self.transmit(new_video)
+            if not ok:
+                logging.error(error)
 
         self.config_data = config_data
 
@@ -149,8 +153,13 @@ class FrapiClient():
 
         ws_stream = websocket_frapi.WebSocketFrapi()
         ws_url = 'ws://' + self.ip + ':' + self.port + '/recognize?api_key=' + self.api_key
-        ws_stream.config(config_data, ws_url, label, self)
+        (ok, error) = ws_stream.config(config_data, ws_url, label, self)
         self.streams[label] = ws_stream
+
+        if not ok:
+            self.end_transmission(label, close_from_socket = False)
+
+        return (ok, error)
 
 
     def on_message(self, image, ores, stream_label):

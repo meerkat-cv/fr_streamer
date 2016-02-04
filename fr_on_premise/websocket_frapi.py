@@ -40,10 +40,11 @@ class WebSocketFrapi(WebSocketClient):
         self.client = client
         self.stream_label = stream_label
         if self.video.isOpened() == False:
-            print('problem opening', stream_label)
-            return
+            return (False, 'Problem opening '+stream_label)
 
         self.connect(ws_url)
+
+        return (True, '')
 
 
     def send(self, data):
