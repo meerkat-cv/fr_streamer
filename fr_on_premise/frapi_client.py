@@ -1,7 +1,7 @@
 from fr_on_premise import websocket_frapi
 from tornado import ioloop
 from threading import Thread
-from fr_on_premise.temp_coherence import TempCoherence
+from fr_on_premise.temp_coherence import TempCoherence, CoherenceMethod
 import json
 import cv2
 import time
@@ -143,10 +143,22 @@ class FrapiClient():
         self.stream_results_batch[label] = []
         self.stream_plot[label] = config_data.get('plotStream', False)
         self.stream_sliding_window[label] = config_data.get('tempWindow', 0)
+        
         if self.stream_sliding_window[label] > 0:
-            self.stream_temp_coherence[label] = TempCoherence(self.stream_sliding_window[label])
-        self.num_streams = self.num_streams + 1
+            method = None
+            threshold = config_data.get('threshold')
+            method_name = config_data.get('method', 'hardThreshold')
 
+            if method_name == 'hardThreshold':
+                method = CoherenceMethod.hard_threshold
+            elif method_name == 'scoreMean':
+                method = CoherenceMethod.score_mean
+            else:
+                method = CoherenceMethod.score_median
+
+            self.stream_temp_coherence[label] = TempCoherence(self.stream_sliding_window[label], method, threshold)
+
+        self.num_streams = self.num_streams + 1
         ws_stream = websocket_frapi.WebSocketFrapi()
         ws_url = 'ws://' + self.ip + ':' + self.port + '/recognize?api_key=' + self.api_key
         ws_stream.config(config_data, ws_url, label, self)
