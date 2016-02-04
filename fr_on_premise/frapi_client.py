@@ -18,6 +18,7 @@ class FrapiClient():
         self.stream_sliding_window = {}
         self.stream_temp_coherence = {}
         self.num_streams = 0
+        self.min_confidence = 0
         self.config_data = None
         self.save_json_config = None
         self.http_post_config = None
@@ -56,6 +57,7 @@ class FrapiClient():
             self.http_post_config = config_data['frapi']['output'].get('http_post', None)
 
         self.config_data = config_data
+        self.min_confidence = config_data['frapi'].get('minConfidence', 0)
 
         if self.save_json_config is not None:
             self.stream_results_batch = {}
@@ -95,6 +97,8 @@ class FrapiClient():
         else:
             self.save_json_config = None
             self.http_post_config = None
+
+        self.min_confidence = config_data['frapi'].get('minConfidence', 0)
         
         if self.save_json_config is not None:
             if self.save_json_config['dir'] is None:
@@ -142,12 +146,12 @@ class FrapiClient():
         label = self.get_stream_label(config_data)
         self.stream_results_batch[label] = []
         self.stream_plot[label] = config_data.get('plotStream', False)
-        self.stream_sliding_window[label] = config_data.get('tempWindow', 0)
         
-        if self.stream_sliding_window[label] > 0:
+        if config_data.get('tempCoherence') is not None:
+            self.stream_sliding_window[label] = config_data['tempCoherence'].get('tempWindow', 15)
             method = None
-            threshold = config_data.get('threshold')
-            method_name = config_data.get('method', 'hardThreshold')
+            threshold = config_data['tempCoherence'].get('threshold', self.min_confidence)
+            method_name = config_data['tempCoherence'].get('method', 'hardThreshold')
 
             if method_name == 'hardThreshold':
                 method = CoherenceMethod.hard_threshold
