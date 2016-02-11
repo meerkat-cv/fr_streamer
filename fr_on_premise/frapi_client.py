@@ -1,6 +1,7 @@
 from fr_on_premise import websocket_frapi
 from tornado import ioloop
 from threading import Thread
+from fr_on_premise.temp_coherence import TempCoherence, CoherenceMethod
 import json
 import cv2
 import time
@@ -14,33 +15,49 @@ class FrapiClient():
         self.ioloop = ioloop.IOLoop.instance()
         self.streams = {}
         self.stream_plot = {}
+        self.stream_sliding_window = {}
+        self.stream_temp_coherence = {}
         self.num_streams = 0
+        self.min_confidence = 0
         self.config_data = None
+        self.save_json_config = None
+        self.http_post_config = None
+
+
+    def frapi_missing_config(self, config_data):
+        if config_data.get('frapi') is None:
+            return 'Missing frapi configuration.'
+
+        if config_data['frapi'].get('ip') is None:
+            return 'Missing ip of the FrAPI server.'
+
+        if config_data['frapi'].get('port') is None:
+            return 'Missing port of the FrAPI server.'
+        
+        if config_data['frapi'].get('api_key') is None:
+            return 'Missing api_key of the FrAPI server.'
 
 
     def config(self, config_data):
+        # make sure the config file is ok
+        try:
+            self.ip = config_data['frapi']['ip']
+            self.port = str(config_data['frapi']['port'])
+            self.api_key = config_data['frapi']['api_key']
+        except KeyError:
+            error = self.frapi_missing_config(frapi_cfg)
+            logging.error(error)
+            return (False, error)
+
         if self.config_data is not None:
             return self.update_config(config_data)
 
+        if config_data['frapi'].get('output') is not None:
+            self.save_json_config = config_data['frapi']['output'].get('json', None)
+            self.http_post_config = config_data['frapi']['output'].get('http_post', None)
+
         self.config_data = config_data
-
-        self.ip = config_data['frapi']['ip']
-        self.port = config_data['frapi']['port']
-        self.api_key = config_data['frapi']['api_key']
-
-        self.save_json_config = config_data['frapi']['output']['json']
-        self.http_post_config = config_data['frapi']['output']['http_post']
-        
-        if self.ip is None:
-            return (False, 'Missing ip of the FrAPI server.')
-
-        if self.port is None:
-            return (False, 'Missing port of the FrAPI server.')
-        else:
-            self.port = str(self.port)
-
-        if self.api_key is None:
-            return (False, 'Missing api_key of the FrAPI server.')
+        self.min_confidence = config_data['frapi'].get('minConfidence', 0)
 
         if self.save_json_config is not None:
             self.stream_results_batch = {}
@@ -74,8 +91,14 @@ class FrapiClient():
             self.config_data = None
             return self.config(config_data)
 
-        self.save_json_config = config_data['frapi']['output']['json']
-        self.http_post_config = config_data['frapi']['output']['http_post']
+        if config_data['frapi'].get('output') is not None:
+            self.save_json_config = config_data['frapi']['output'].get('json', None)
+            self.http_post_config = config_data['frapi']['output'].get('http_post', None)
+        else:
+            self.save_json_config = None
+            self.http_post_config = None
+
+        self.min_confidence = config_data['frapi'].get('minConfidence', 0)
         
         if self.save_json_config is not None:
             if self.save_json_config['dir'] is None:
@@ -123,8 +146,23 @@ class FrapiClient():
         label = self.get_stream_label(config_data)
         self.stream_results_batch[label] = []
         self.stream_plot[label] = config_data.get('plotStream', False)
-        self.num_streams = self.num_streams + 1
+        
+        if config_data.get('tempCoherence') is not None:
+            self.stream_sliding_window[label] = config_data['tempCoherence'].get('tempWindow', 15)
+            method = None
+            threshold = config_data['tempCoherence'].get('threshold', self.min_confidence)
+            method_name = config_data['tempCoherence'].get('method', 'hardThreshold')
 
+            if method_name == 'hardThreshold':
+                method = CoherenceMethod.hard_threshold
+            elif method_name == 'scoreMean':
+                method = CoherenceMethod.score_mean
+            else:
+                method = CoherenceMethod.score_median
+
+            self.stream_temp_coherence[label] = TempCoherence(self.stream_sliding_window[label], method, threshold)
+
+        self.num_streams = self.num_streams + 1
         ws_stream = websocket_frapi.WebSocketFrapi()
         ws_url = 'ws://' + self.ip + ':' + self.port + '/recognize?api_key=' + self.api_key
         ws_stream.config(config_data, ws_url, label, self)
@@ -139,6 +177,9 @@ class FrapiClient():
         if image is not None and 'people' in ores and stream_label in self.stream_results_batch:
             post_image = self.http_post_config is not None and len(ores['people']) > 0
 
+            if self.stream_sliding_window[stream_label] > 1 and (self.save_json_config is not None or post_image):
+                ores = self.stream_temp_coherence[stream_label].add_frame(ores, min_confidence=-0.8)
+
             if post_image or self.stream_plot[stream_label]:
                 debug_image = self.plot_recognition_info(image, ores, stream_label)
 
@@ -147,6 +188,7 @@ class FrapiClient():
                 self.stream_results_batch[stream_label].append(ores)
                 if len(self.stream_results_batch[stream_label]) >= self.save_json_config['node_frames']:
                     self.save_json_results(stream_label)
+
             if post_image:
                 self.post_result(ores, debug_image)
 
@@ -181,14 +223,19 @@ class FrapiClient():
 
 
     def plot_recognition_info(self, image, ores, stream_label):
-        for rec in ores['people']:
-            l = rec['top_left']['x']
-            t = rec['top_left']['y']
-            r = rec['bottom_right']['x']
-            b = rec['bottom_right']['y']
-            tl = [l, t]
-            br = [r, b]
-            cv2.rectangle(image, (int(tl[0]), int(tl[1])), (int(br[0]), int(br[1])), (165, 142, 254), 4)
+        for idx, rec in enumerate(ores['people']):
+            tl = []
+            br = []
+            if rec.get('top_left') is not None:
+                l = rec['top_left']['x']
+                t = rec['top_left']['y']
+                r = rec['bottom_right']['x']
+                b = rec['bottom_right']['y']
+                tl = [l, t]
+                br = [r, b]
+                cv2.rectangle(image, (int(tl[0]), int(tl[1])), (int(br[0]), int(br[1])), (165, 142, 254), 4)
+            else:
+                tl = [10, 40+idx*40]
             
             font_face = cv2.FONT_HERSHEY_SIMPLEX
             label = rec["recognition"]["predictedLabel"]
@@ -239,6 +286,8 @@ class FrapiClient():
 
         del self.streams[stream_label]
         del self.stream_results_batch[stream_label]
+        del self.stream_sliding_window[stream_label]
+        del self.stream_temp_coherence[stream_label]
         self.num_streams = self.num_streams - 1
 
         for seq in self.config_data['testSequences']:

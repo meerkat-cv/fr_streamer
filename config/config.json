@@ -1,7 +1,13 @@
 {
 	"testSequences": [
 		{
-			"video_file": "/home/guilherme/obama.mp4", "label": "Obama", "plotStream": true
+			"camera_url": "0", "label": "Webcam", "plotStream": true, 
+			"tempCoherence": 
+			{
+				"tempWindow": 15,
+				"method": "scoreMean",
+				"threshold": -0.8
+			}
 		}
 	],
 
@@ -10,6 +16,7 @@
 		"api_key": "31a5d10dd5725b32f58d1347278ea335",
 		"ip": "localhost",
 		"port": 4444,
+		"minConfidence": 0.8,
 		"output": {
 			"json": {
 				"node_frames": 5,
