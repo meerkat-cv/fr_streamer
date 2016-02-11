@@ -10,18 +10,17 @@ from requests_toolbelt import MultipartEncoder
 
 class FrapiClient():
 
-    def __init__(self, config_name):
+    def __init__(self):
         self.ioloop = ioloop.IOLoop.instance()
         self.streams = {}
+        self.stream_plot = {}
         self.num_streams = 0
+        self.config_data = None
 
-        # try:
-        with open(config_name) as data_file:    
-            config_data = json.load(data_file)
-        # except:
-        #     print('asfasdf')
-        #     print('ERROR: problem opening config', config_name)
-        #     return
+
+    def config(self, config_data):
+        if self.config_data is not None:
+            return self.update_config(config_data)
 
         self.config_data = config_data
 
@@ -31,22 +30,17 @@ class FrapiClient():
 
         self.save_json_config = config_data['frapi']['output']['json']
         self.http_post_config = config_data['frapi']['output']['http_post']
-        # self.json_node_frames = config_data['frapi']['json_node_frames']
-        # self.json_dir = config_data['frapi']['json_dir']
-
+        
         if self.ip is None:
-            print('ERROR: Missing ip of the FrAPI server.')
-            return
+            return (False, 'Missing ip of the FrAPI server.')
 
         if self.port is None:
-            print('ERROR: Missing port of the FrAPI server.')
-            return
+            return (False, 'Missing port of the FrAPI server.')
         else:
             self.port = str(self.port)
 
         if self.api_key is None:
-            print('ERROR: Missing api_key of the FrAPI server.')
-            return
+            return (False, 'Missing api_key of the FrAPI server.')
 
         if self.save_json_config is not None:
             self.stream_results_batch = {}
@@ -60,7 +54,7 @@ class FrapiClient():
         if self.http_post_config is not None:
             if self.http_post_config['url'] is None:
                 logging.error('Need to inform HTTP Post route if http-post was selected as output.')
-                return
+                return (False, 'Need to inform HTTP Post route if http-post was selected as output.')
 
             if self.http_post_config['post_image'] is None:
                 self.http_post_config['post_image'] = False
@@ -68,6 +62,57 @@ class FrapiClient():
 
         for i in range(0, len(config_data['testSequences'])):
             self.transmit(config_data['testSequences'][i])
+
+        return (True, '')
+
+
+    def update_config(self, config_data):
+        # if I have a major config change, just reset everything
+        if self.ip != config_data['frapi']['ip'] or self.port != str(config_data['frapi']['port']) or\
+            self.api_key != config_data['frapi']['api_key']:
+
+            self.config_data = None
+            return self.config(config_data)
+
+        self.save_json_config = config_data['frapi']['output']['json']
+        self.http_post_config = config_data['frapi']['output']['http_post']
+        
+        if self.save_json_config is not None:
+            if self.save_json_config['dir'] is None:
+                self.save_json_config['dir'] = './out_json/'
+            
+            if self.save_json_config['node_frames'] is None:
+                self.save_json_config['node_frames'] = 15
+
+        if self.http_post_config is not None:
+            if self.http_post_config['url'] is None:
+                logging.error('Need to inform HTTP Post route if http-post was selected as output.')
+                return (False, 'Need to inform HTTP Post route if http-post was selected as output.')
+
+            if self.http_post_config['post_image'] is None:
+                self.http_post_config['post_image'] = False
+            
+
+        # find the streams that ended, and the ones that are new
+        list_removed = []
+        for old in self.config_data['testSequences']:
+            if old not in config_data['testSequences']:
+                list_removed.append(old)
+
+        list_added = []
+        for new_video in config_data['testSequences']:
+            if new_video not in self.config_data['testSequences']:
+                list_added.append(new_video)
+
+        for old in list_removed:
+            self.end_transmission(old['label'], close_from_socket = False)
+
+        for new_video in list_added:
+            self.transmit(new_video)
+
+        self.config_data = config_data
+
+        return (True, None)
 
 
     def get_config_data(self):
@@ -77,6 +122,7 @@ class FrapiClient():
     def transmit(self, config_data):
         label = self.get_stream_label(config_data)
         self.stream_results_batch[label] = []
+        self.stream_plot[label] = config_data.get('plotStream', False)
         self.num_streams = self.num_streams + 1
 
         ws_stream = websocket_frapi.WebSocketFrapi()
@@ -91,20 +137,22 @@ class FrapiClient():
             return
         
         if image is not None and 'people' in ores and stream_label in self.stream_results_batch:
-            debug_image = self.plot_recognition_info(image, ores, stream_label)
+            post_image = self.http_post_config is not None and len(ores['people']) > 0
 
+            if post_image or self.stream_plot[stream_label]:
+                debug_image = self.plot_recognition_info(image, ores, stream_label)
 
             # the output is only activate if there is someone recognized.
             if self.save_json_config is not None:
                 self.stream_results_batch[stream_label].append(ores)
                 if len(self.stream_results_batch[stream_label]) >= self.save_json_config['node_frames']:
                     self.save_json_results(stream_label)
-            if self.http_post_config is not None and len(ores['people']) > 0:
+            if post_image:
                 self.post_result(ores, debug_image)
 
     def post_result(self, result, debug_image):
         """
-        This function posts the result that is passed to the configurated
+        This function posts the result that is passed to the configured
         function. If no image is required it is a application/json payload,
         otherwise is a multiform/data.
         """
@@ -150,8 +198,10 @@ class FrapiClient():
             cv2.rectangle(image, (text_pt[0], text_pt[1]-text_size[1]-4), (text_pt[0] + text_size[0], text_pt[1]+4), (165, 142, 254), -1)
             cv2.putText(image, label, text_pt, font_face, 1, (255, 255, 255), 2)
 
-        cv2.imshow(stream_label, image)
-        cv2.waitKey(1)
+        if self.stream_plot[stream_label]:
+            cv2.imshow(stream_label, image)
+            cv2.waitKey(1)
+
         return image
 
 
@@ -190,6 +240,11 @@ class FrapiClient():
         del self.streams[stream_label]
         del self.stream_results_batch[stream_label]
         self.num_streams = self.num_streams - 1
+
+        for seq in self.config_data['testSequences']:
+            if seq['label'] == stream_label:
+                self.config_data['testSequences'].remove(seq)
+                break
 
         cv2.destroyAllWindows()
         cv2.waitKey(1)
