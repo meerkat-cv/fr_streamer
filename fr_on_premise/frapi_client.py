@@ -78,7 +78,9 @@ class FrapiClient():
             
 
         for i in range(0, len(config_data['testSequences'])):
-            self.transmit(config_data['testSequences'][i])
+            (ok, error) = self.transmit(config_data['testSequences'][i])
+            if not ok:
+                logging.error(error)
 
         return (True, '')
 
@@ -118,20 +120,30 @@ class FrapiClient():
 
         # find the streams that ended, and the ones that are new
         list_removed = []
-        for old in self.config_data['testSequences']:
-            if old not in config_data['testSequences']:
+        new_labels = []
+        for seq in config_data['testSequences']:
+            if seq.get('label') is not None:
+                new_labels.append(seq.get('label'))
+
+        old_labels = self.streams.keys()
+        for old in old_labels:
+            if old not in new_labels:
                 list_removed.append(old)
 
         list_added = []
         for new_video in config_data['testSequences']:
-            if new_video not in self.config_data['testSequences']:
+            if new_video.get('label') is None:
+                continue
+            if new_video['label'] not in old_labels:
                 list_added.append(new_video)
 
         for old in list_removed:
-            self.end_transmission(old['label'], close_from_socket = False)
+            self.end_transmission(old, close_from_socket = False)
 
         for new_video in list_added:
-            self.transmit(new_video)
+            (ok, error) = self.transmit(new_video)
+            if not ok:
+                logging.error(error)
 
         self.config_data = config_data
 
@@ -143,7 +155,10 @@ class FrapiClient():
 
 
     def transmit(self, config_data):
-        label = self.get_stream_label(config_data)
+        (ok, error, label) = self.get_stream_label(config_data)
+        if not ok:
+            return (ok, error)
+
         self.stream_results_batch[label] = []
         self.stream_plot[label] = config_data.get('plotStream', False)
         
@@ -165,8 +180,15 @@ class FrapiClient():
         self.num_streams = self.num_streams + 1
         ws_stream = websocket_frapi.WebSocketFrapi()
         ws_url = 'ws://' + self.ip + ':' + self.port + '/recognize?api_key=' + self.api_key
-        ws_stream.config(config_data, ws_url, label, self)
-        self.streams[label] = ws_stream
+        (ok, error) = ws_stream.config(config_data, ws_url, label, self)
+        
+        if not ok:
+            self.streams[label] = None
+            self.end_transmission(label, close_from_socket = False)
+        else:
+            self.streams[label] = ws_stream
+
+        return (ok, error)
 
 
     def on_message(self, image, ores, stream_label):
@@ -256,13 +278,11 @@ class FrapiClient():
         label = config_data['label']
 
         if label is None:
-            label = 'Stream_'+str(self.get_stream_id())
-            print('Error: label not defined. Seting to', label)
+            return (False, 'Label not defined', '')
         if label in self.streams:
-            label = 'Stream_'+str(self.get_stream_id())
-            print('Error: label already defined. Seting to', label)
+            return (False, 'Label already defined', '')
 
-        return label
+        return (True, '', label)
 
 
     def get_stream_id(self):
@@ -273,10 +293,10 @@ class FrapiClient():
         
 
     def end_transmission(self, stream_label, close_from_socket):
-        if stream_label not in self.streams:
+        if stream_label not in self.streams.keys():
             return
 
-        if not close_from_socket:
+        if not close_from_socket and self.streams.get(stream_label) is not None:
             self.streams[stream_label].close()
             # if I'm closing from the frapi_client, I will enter in
             # this function again, called by stream.close(). So I'm
@@ -284,10 +304,12 @@ class FrapiClient():
             # the rest of the closing process will continue.
             return
 
-        del self.streams[stream_label]
+        if stream_label in self.streams.keys():
+            del self.streams[stream_label]
         del self.stream_results_batch[stream_label]
         del self.stream_sliding_window[stream_label]
-        del self.stream_temp_coherence[stream_label]
+        if stream_label in self.stream_temp_coherence:
+            del self.stream_temp_coherence[stream_label]
         self.num_streams = self.num_streams - 1
 
         for seq in self.config_data['testSequences']:

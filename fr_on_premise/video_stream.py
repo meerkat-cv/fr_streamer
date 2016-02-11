@@ -18,7 +18,7 @@ def load_from_config(config_data):
     if 'camera_url' in config_data:
         return CameraUrl(config_data)
 
-    print('VideoStream input type not valid.')
+    return VideoStream()
 
 
 
