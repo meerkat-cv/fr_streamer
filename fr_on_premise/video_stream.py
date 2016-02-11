@@ -3,7 +3,7 @@ import time
 import cv2
 import os
 from pprint import pprint
-from threading import Thread
+from threading import Thread, Lock, Event
 
 
 def load_from_config(config_data):
@@ -186,6 +186,8 @@ class CameraUrl(VideoStream):
         self.end_frame = -1
         self.frame = None
         self.is_opened = False
+        self.mutex = Lock()
+        self.close_event = Event()
         self.open(config_data['camera_url'])
 
         if config_data.get('end_frame') is not None:
@@ -208,12 +210,18 @@ class CameraUrl(VideoStream):
                 return
             
             while self.is_opened:
+                self.mutex.acquire()
                 ret, self.frame = self.video.read()
+                self.mutex.release()
                 self.curr_frame = self.curr_frame+1
                 if self.frame is None:
                     self.is_opened = False
 
                 time.sleep(0.015)
+
+            # this capture thread is over, I can safely release the
+            # video capture from opencv
+            self.close_event.set()
 
         t = Thread(target = capture_thread, args=(self,))
         t.daemon = True
@@ -229,6 +237,11 @@ class CameraUrl(VideoStream):
 
     def close(self):
         self.is_opened = False
+        # wait, at max, 10 seconds for the capturing thread to finish.
+        # If it takes over than this, something bad happened and the thread
+        # will probably never be able to call close_even.set(). Therefore 
+        # the timeout
+        self.close_event.wait(10)
         self.video.release()
 
 
@@ -236,6 +249,10 @@ class CameraUrl(VideoStream):
         if self.is_opened == False or self.has_ended():
             return None
 
-        return self.frame
+        self.mutex.acquire()
+        frame_cpy = self.frame.copy()
+        self.mutex.release()
+
+        return frame_cpy
 
 
