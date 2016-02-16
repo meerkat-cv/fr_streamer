@@ -110,16 +110,16 @@
       				self.frSocket.send(blob);
     			}, 'image/jpeg');
 
-		      	self.drawRecognition(ctx, self.recognition_data, 0);
+		      	self.drawRecognition(ctx, self.recognition_data, -10);
 		      }
 
 
-		   }, 120);
+		   }, 80);
 		}, false);
     }
 
     WS_Recognition.connectWS = function() {
-    	this.frSocket = new WebSocket("ws://localhost:4444/echo?api_key=d4498a41d58519da0a4514a40a5d8e8c");
+    	this.frSocket = new WebSocket("wss://192.168.25.120:4444/recognize?api_key=34902521cd71a0db4c9cc246df413746");
 
     	var self = this;
     	this.frSocket.onopen = function(event) {
