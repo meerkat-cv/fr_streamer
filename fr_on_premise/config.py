@@ -1,5 +1,6 @@
 import json
 import logging
+import threading
 
 class Singleton(object):
     __singleton_lock = threading.Lock()
