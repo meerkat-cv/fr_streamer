@@ -1,6 +1,8 @@
 import json
 import logging
 import threading
+from threading import Thread, Lock
+
 
 class Singleton(object):
     __singleton_lock = threading.Lock()
@@ -27,6 +29,7 @@ class Config(Singleton):
         self.api_key = None
         self.save_json_config = None
         self.http_post_config = None
+        self.mtx = Lock()
 
 
     def frapi_missing_config(self, config_data):
@@ -43,7 +46,7 @@ class Config(Singleton):
             return 'Missing api_key of the FrAPI server.'
 
 
-    def config(self, config_data):
+    def redo_config(self, config_data):
         # make sure the config file is ok
         try:
             self.ip = config_data['frapi']['ip']
@@ -90,12 +93,15 @@ class Config(Singleton):
 
 
     def update_config(self, config_data):
+        self.mtx.acquire()
         # if I have a major config change, just reset everything
         if self.ip != config_data['frapi']['ip'] or self.port != str(config_data['frapi']['port']) or\
             self.api_key != config_data['frapi']['api_key']:
 
             self.config_data = None
-            return self.config(config_data)
+            (ok, error, list_added, list_removed) = self.redo_config(config_data)
+            self.mtx.release()
+            return (ok, error, list_added, list_removed)
 
         if config_data['frapi'].get('output') is not None:
             self.save_json_config = config_data['frapi']['output'].get('json', None)
@@ -148,4 +154,5 @@ class Config(Singleton):
 
         self.config_data = config_data
 
+        self.mtx.release()
         return (True, None, list_added, list_removed)
