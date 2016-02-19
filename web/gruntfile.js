@@ -7,7 +7,7 @@ grunt.initConfig({
     connect: {
       server: {
         options: {
-          protocol: 'https',
+          protocol: 'http',
           hostname: '0.0.0.0',
           port: 8080,
           base: './',

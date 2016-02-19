@@ -55,14 +55,14 @@
         }
     };
 
-    WS_Recognition.drawFace = function (ctx, face) {
+    WS_Recognition.drawFace = function (ctx, face, color) {
     	if (face) {
             var w = (face['bottom_right']['x'] - face['top_left']['x']),
                 h = (face['bottom_right']['y'] - face['top_left']['y']);
             ctx.beginPath();
             ctx.rect(face['top_left']['x'], face['top_left']['y'], w, h);
             ctx.lineWidth=4;
-            ctx.strokeStyle="#488efe";
+            ctx.strokeStyle=color;
             ctx.stroke();
         }
 
@@ -73,18 +73,31 @@
     	var people_list = data["people"];
     	for (var i = 0; i < people_list.length; ++i) {
             var name = people_list[i]["recognition"]["predictedLabel"] || "?";
-            this.drawFace(ctx, people_list[i]);
+            
+            var color = '#3a3a3a';
+            if (people_list[i]["recognition"]["confidence"] > minConfidence)
+                color = '#488efe';
+
+
+            this.drawFace(ctx, people_list[i], color);
 
             if (people_list[i]["recognition"]["confidence"] > minConfidence) {
                 ctx.font = "20px Arial";
                 var width = ctx.measureText(name).width;
-                ctx.fillStyle = "#488efe";
+                ctx.fillStyle = color;
                 ctx.fillRect(people_list[i]['top_left']['x']-2, people_list[i]['top_left']['y']-27, width+10, 26);
 
                 ctx.fillStyle = "white";
                 ctx.fillText(name, people_list[i]['top_left']['x']+2, people_list[i]['top_left']['y']-6);
-
             }
+
+            var conf_string = 'Conf: '+Math.round(people_list[i]["recognition"]["confidence"]*100)/100;
+            var width = ctx.measureText(conf_string).width;
+            ctx.fillStyle = color;
+            ctx.fillRect(people_list[i]['top_left']['x']-2, people_list[i]['bottom_right']['y']-27, width+10, 26);
+
+            ctx.fillStyle = "white";
+            ctx.fillText(conf_string, people_list[i]['top_left']['x']+2, people_list[i]['bottom_right']['y']-6);
         }
     }
 
@@ -110,7 +123,7 @@
       				self.frSocket.send(blob);
     			}, 'image/jpeg');
 
-		      	self.drawRecognition(ctx, self.recognition_data, -10);
+		      	self.drawRecognition(ctx, self.recognition_data, 40);
 		      }
 
 
@@ -119,7 +132,7 @@
     }
 
     WS_Recognition.connectWS = function() {
-    	this.frSocket = new WebSocket("wss://192.168.25.120:4444/recognize?api_key=34902521cd71a0db4c9cc246df413746");
+    	this.frSocket = new WebSocket("ws://localhost:4444/recognize?api_key=27fe4653692be12294b02336e1950c99");
 
     	var self = this;
     	this.frSocket.onopen = function(event) {
