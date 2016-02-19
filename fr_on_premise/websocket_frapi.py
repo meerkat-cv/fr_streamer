@@ -24,8 +24,13 @@ class WebSocketFrapi(WebSocketClient):
             return
         else:
             ores = json.loads(msg)
-            self.client.on_message(self.original_frame, ores, self.stream_label)
-            self.call_stream()
+
+            if 'error' in ores:
+                logging.error('Problem with server: '+ores['error'])
+                self.close()
+            else:
+                self.client.on_message(self.original_frame, ores, self.stream_label)
+                self.call_stream()
 
 
     def call_stream(self):
