@@ -22,6 +22,11 @@ class Config(Singleton):
         self.config_data = None
         self.save_json_config = None
         self.http_post_config = None
+        self.ip = None
+        self.port = None
+        self.api_key = None
+        self.save_json_config = None
+        self.http_post_config = None
 
 
     def frapi_missing_config(self, config_data):
@@ -81,7 +86,7 @@ class Config(Singleton):
         for new_video in config_data['testSequences']:
             list_streams.append(new_video)
 
-        return (True, '', list_streams, None)
+        return (True, '', list_streams, [])
 
 
     def update_config(self, config_data):
