@@ -18,8 +18,16 @@ class FrapiClient():
         self.stream_plot = {}
         self.stream_sliding_window = {}
         self.stream_temp_coherence = {}
+        self.stream_results_batch = {}
         self.num_streams = 0
         self.config = Config()
+
+        try:
+            with open('./config/config.json') as data:
+                config_data = json.loads(data.read())
+            self.update_config(config_data)
+        except:
+            logging.error('Problem opening default configuration: config/config.json')
 
 
     def update_config(self, config_data):
@@ -38,10 +46,6 @@ class FrapiClient():
         return (True, None)
 
 
-    def get_config_data(self):
-        return self.config_data
-
-
     def transmit(self, config_data):
         (ok, error, label) = self.get_stream_label(config_data)
         if not ok:
@@ -53,7 +57,7 @@ class FrapiClient():
         if config_data.get('tempCoherence') is not None:
             self.stream_sliding_window[label] = config_data['tempCoherence'].get('tempWindow', 15)
             method = None
-            threshold = config_data['tempCoherence'].get('threshold', self.min_confidence)
+            threshold = config_data['tempCoherence'].get('threshold', self.config.min_confidence)
             method_name = config_data['tempCoherence'].get('method', 'hardThreshold')
 
             if method_name == 'hardThreshold':
