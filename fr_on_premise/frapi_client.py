@@ -85,7 +85,7 @@ class FrapiClient():
 
     def on_message(self, image, ores, stream_label):
         if stream_label not in self.streams:
-            print('Stream', stream_label, 'already closed.')
+            logging.error('Stream', stream_label, 'already closed.')
             return
         
         if image is not None and 'people' in ores and stream_label in self.stream_results_batch:
@@ -128,7 +128,7 @@ class FrapiClient():
     def save_json_results(self, stream_label):
         file_name = stream_label+'_'+str(time.time())+'.json'
         if stream_label not in self.streams:
-            print('Stream', stream_label, 'already closed.')
+            logging.error('Stream', stream_label, 'already closed.')
             return
         with open(self.config.save_json_config['dir']+'/'+file_name, 'w') as fp:
             json.dump(self.stream_results_batch[stream_label], fp, indent=4, separators=(',', ': '))
