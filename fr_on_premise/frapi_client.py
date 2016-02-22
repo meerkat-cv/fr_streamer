@@ -10,6 +10,20 @@ import requests, logging
 from io import StringIO
 from requests_toolbelt import MultipartEncoder
 
+
+class Singleton(object):
+    __singleton_lock = Lock()
+    __singleton_instance = None
+
+    @classmethod
+    def instance(cls):
+        if not cls.__singleton_instance:
+            with cls.__singleton_lock:
+                if not cls.__singleton_instance:
+                    cls.__singleton_instance = cls()
+        return cls.__singleton_instance
+
+
 class FrapiClient(Singleton):
 
     def __init__(self):
