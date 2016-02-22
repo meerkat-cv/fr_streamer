@@ -10,6 +10,6 @@ class ConfigController():
 
 
 	def change_config(self, config_data):
-		(ok, error) = self.frapi_client.config(config_data)
+		(ok, error) = self.frapi_client.update_config(config_data)
 
 		return (ok, error)

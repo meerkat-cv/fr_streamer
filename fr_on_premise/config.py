@@ -14,8 +14,6 @@ class Config():
         self.ip = None
         self.port = None
         self.api_key = None
-        self.save_json_config = None
-        self.http_post_config = None
         
 
     def frapi_missing_config(self, config_data):
@@ -119,7 +117,11 @@ class Config():
             if seq.get('label') is not None:
                 new_labels.append(seq.get('label'))
 
-        old_labels = self.streams.keys()
+        old_labels = []
+        for seq in self.config_data['testSequences']:
+            if seq.get('label') is not None:
+                old_labels.append(seq.get('label'))
+
         for old in old_labels:
             if old not in new_labels:
                 list_removed.append(old)
@@ -130,11 +132,6 @@ class Config():
                 continue
             if new_video['label'] not in old_labels:
                 list_added.append(new_video)
-
-        for new_video in list_added:
-            (ok, error) = self.transmit(new_video)
-            if not ok:
-                logging.error(error)
 
         self.config_data = config_data
 
