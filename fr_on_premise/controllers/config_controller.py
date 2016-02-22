@@ -6,7 +6,7 @@ from fr_on_premise.frapi_client import FrapiClient
 
 class ConfigController():
 	def __init__(self):
-		self.frapi_client = FrapiClient()
+		self.frapi_client = FrapiClient.instance()
 
 
 	def change_config(self, config_data):

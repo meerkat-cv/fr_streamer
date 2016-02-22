@@ -1,6 +1,6 @@
 from fr_on_premise import websocket_frapi
 from tornado import ioloop
-from threading import Thread
+from threading import Thread, Lock
 from fr_on_premise.temp_coherence import TempCoherence, CoherenceMethod
 from fr_on_premise.config import Config
 import json
@@ -10,9 +10,24 @@ import requests, logging
 from io import StringIO
 from requests_toolbelt import MultipartEncoder
 
-class FrapiClient():
+
+class Singleton(object):
+    __singleton_lock = Lock()
+    __singleton_instance = None
+
+    @classmethod
+    def instance(cls):
+        if not cls.__singleton_instance:
+            with cls.__singleton_lock:
+                if not cls.__singleton_instance:
+                    cls.__singleton_instance = cls()
+        return cls.__singleton_instance
+
+
+class FrapiClient(Singleton):
 
     def __init__(self):
+        self.mtx = Lock()
         self.ioloop = ioloop.IOLoop.instance()
         self.streams = {}
         self.stream_plot = {}
@@ -25,14 +40,17 @@ class FrapiClient():
         try:
             with open('./config/config.json') as data:
                 config_data = json.loads(data.read())
+            data.close()
             self.update_config(config_data)
         except:
             logging.error('Problem opening default configuration: config/config.json')
 
 
     def update_config(self, config_data):
+        self.mtx.acquire()
         (ok, error, new_transmissions, ended_transmissions) = self.config.update_config(config_data)
         if not ok:
+            self.mtx.release()
             return (ok, error)
 
         for transmission in ended_transmissions:
@@ -43,6 +61,7 @@ class FrapiClient():
             if not ok:
                 logging.error(error)
 
+        self.mtx.release()
         return (True, None)
 
 
