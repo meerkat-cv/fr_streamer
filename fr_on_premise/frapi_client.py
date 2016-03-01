@@ -123,7 +123,7 @@ class FrapiClient(Singleton):
                 if len(self.stream_results_batch[stream_label]) >= self.config.save_json_config['node_frames']:
                     self.save_json_results(stream_label)
 
-            if post_image:
+            if post_image and len(ores['people']) > 0:
                 self.post_result(ores, debug_image)
 
     def post_result(self, result, debug_image):
