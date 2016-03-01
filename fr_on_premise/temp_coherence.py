@@ -86,7 +86,7 @@ class TempCoherence():
         return 0.5
 
 
-    def add_frame(self, ores, min_confidence):
+    def add_frame(self, ores):
         (self.labels[self.last_pos], self.costs[self.last_pos]) = self.extract_info(ores)
         self.last_pos = (self.last_pos+1) % self.temp_window;
 

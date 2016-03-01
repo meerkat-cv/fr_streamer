@@ -111,7 +111,7 @@ class FrapiClient(Singleton):
             post_image = self.config.http_post_config is not None and len(ores['people']) > 0
 
             if self.stream_sliding_window[stream_label] > 1 and (self.config.save_json_config is not None or post_image):
-                ores = self.stream_temp_coherence[stream_label].add_frame(ores, min_confidence=-0.8)
+                ores = self.stream_temp_coherence[stream_label].add_frame(ores)
 
             if post_image or self.stream_plot[stream_label]:
                 debug_image = self.plot_recognition_info(image, ores, stream_label)
