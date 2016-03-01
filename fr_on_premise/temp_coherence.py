@@ -1,5 +1,6 @@
 from enum import IntEnum
 import statistics
+import logging
 
 class CoherenceMethod(IntEnum):
     hard_threshold = 1
@@ -80,7 +81,7 @@ class TempCoherence():
         if self.method == CoherenceMethod.score_median:
             return statistics.median(costs_vec)
 
-        print('Undefined TempCoherence method.')
+        logging.error('Undefined TempCoherence method.')
 
         return 0.5
 

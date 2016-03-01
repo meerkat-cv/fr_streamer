@@ -4,6 +4,7 @@ from functools import partial
 import json
 import time
 import cv2
+import logging
 
 
 class WebSocketFrapi(WebSocketClient):
@@ -15,6 +16,7 @@ class WebSocketFrapi(WebSocketClient):
         self.original_frame = None
         self.stream_label = None
         self.closing = False
+        self.ws_url = None
         
 
     def _on_message(self, msg):
@@ -22,8 +24,13 @@ class WebSocketFrapi(WebSocketClient):
             return
         else:
             ores = json.loads(msg)
-            self.client.on_message(self.original_frame, ores, self.stream_label)
-            self.call_stream()
+
+            if 'error' in ores:
+                logging.error('Problem with server: '+ores['error'])
+                self.close()
+            else:
+                self.client.on_message(self.original_frame, ores, self.stream_label)
+                self.call_stream()
 
 
     def call_stream(self):
@@ -36,11 +43,12 @@ class WebSocketFrapi(WebSocketClient):
 
     
     def config(self, config_data, ws_url, stream_label, client):
+        self.ws_url = ws_url
         self.video = video_stream.load_from_config(config_data)
         self.client = client
         self.stream_label = stream_label
         if self.video.isOpened() == False:
-            return (False, 'Problem opening '+stream_label)
+            logging.error (False, 'Problem opening '+stream_label)
 
         self.connect(ws_url)
 
@@ -64,7 +72,7 @@ class WebSocketFrapi(WebSocketClient):
         if not self._ws_connection:
             raise RuntimeError('Web socket connection is already closed.')
 
-        print('Closing connection of stream', self.stream_label)
+        logging.info('Closing connection of stream', self.stream_label)
         self.closing = True
         if self.time_out_stream is not None:
             ioloop.IOLoop().instance().remove_timeout(self.time_out_stream)
@@ -81,6 +89,7 @@ class WebSocketFrapi(WebSocketClient):
     def _on_connection_error(self, exception):
         self.video.close()
         self.client.end_transmission(self.stream_label, close_from_socket = True)
+        logging.error('Problem connecting to the given websocket: '+self.ws_url)
 
 
     @gen.coroutine

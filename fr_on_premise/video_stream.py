@@ -38,10 +38,10 @@ class VideoStream():
 
 
     def get_next_frame(self):
-        print('You are using VideoStream wrong.')
+        logging.error('You are using VideoStream wrong.')
 
     def is_opened(self):
-        print('You are using VideoStream wrong.')
+        logging.error('You are using VideoStream wrong.')
 
     def isOpened(self):
         return self.is_opened
@@ -87,7 +87,7 @@ class VideoFile(VideoStream):
     def open(self, video_name):
         self.video = cv2.VideoCapture(video_name)
         if self.video.isOpened() == False:
-            print('VideoStream::open() -- problem opening', video_name)
+            logging.error('VideoStream::open() -- problem opening', video_name)
         else:
             self.is_opened = True
 
@@ -201,7 +201,7 @@ class CameraUrl(VideoStream):
             self.video = cv2.VideoCapture(camera_url)
 
         if self.video.isOpened() == False:
-            print('VideoStream::open() -- problem opening', camera_url)
+            logging.error('VideoStream::open() -- problem opening', camera_url)
         else:
             self.is_opened = True
 
