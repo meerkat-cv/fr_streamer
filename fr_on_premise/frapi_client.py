@@ -1,7 +1,8 @@
 from fr_on_premise import websocket_frapi
 from tornado import ioloop
-from threading import Thread
+from threading import Thread, Lock
 from fr_on_premise.temp_coherence import TempCoherence, CoherenceMethod
+from fr_on_premise.config import Config
 import json
 import cv2
 import time
@@ -9,149 +10,59 @@ import requests, logging
 from io import StringIO
 from requests_toolbelt import MultipartEncoder
 
-class FrapiClient():
+
+class Singleton(object):
+    __singleton_lock = Lock()
+    __singleton_instance = None
+
+    @classmethod
+    def instance(cls):
+        if not cls.__singleton_instance:
+            with cls.__singleton_lock:
+                if not cls.__singleton_instance:
+                    cls.__singleton_instance = cls()
+        return cls.__singleton_instance
+
+
+class FrapiClient(Singleton):
 
     def __init__(self):
+        self.mtx = Lock()
         self.ioloop = ioloop.IOLoop.instance()
         self.streams = {}
         self.stream_plot = {}
         self.stream_sliding_window = {}
         self.stream_temp_coherence = {}
+        self.stream_results_batch = {}
         self.num_streams = 0
-        self.min_confidence = 0
-        self.config_data = None
-        self.save_json_config = None
-        self.http_post_config = None
+        self.config = Config()
 
-
-    def frapi_missing_config(self, config_data):
-        if config_data.get('frapi') is None:
-            return 'Missing frapi configuration.'
-
-        if config_data['frapi'].get('ip') is None:
-            return 'Missing ip of the FrAPI server.'
-
-        if config_data['frapi'].get('port') is None:
-            return 'Missing port of the FrAPI server.'
-        
-        if config_data['frapi'].get('api_key') is None:
-            return 'Missing api_key of the FrAPI server.'
-
-
-    def config(self, config_data):
-        # make sure the config file is ok
         try:
-            self.ip = config_data['frapi']['ip']
-            self.port = str(config_data['frapi']['port'])
-            self.api_key = config_data['frapi']['api_key']
-        except KeyError:
-            error = self.frapi_missing_config(frapi_cfg)
-            logging.error(error)
-            return (False, error)
-
-        if self.config_data is not None:
-            return self.update_config(config_data)
-
-        if config_data['frapi'].get('output') is not None:
-            self.save_json_config = config_data['frapi']['output'].get('json', None)
-            self.http_post_config = config_data['frapi']['output'].get('http_post', None)
-
-        self.config_data = config_data
-        self.min_confidence = config_data['frapi'].get('minConfidence', 0)
-
-        if self.save_json_config is not None:
-            self.stream_results_batch = {}
-            
-            if self.save_json_config['dir'] is None:
-                self.save_json_config['dir'] = './out_json/'
-            
-            if self.save_json_config['node_frames'] is None:
-                self.save_json_config['node_frames'] = 15
-
-        if self.http_post_config is not None:
-            if self.http_post_config['url'] is None:
-                logging.error('Need to inform HTTP Post route if http-post was selected as output.')
-                return (False, 'Need to inform HTTP Post route if http-post was selected as output.')
-
-            if self.http_post_config['post_image'] is None:
-                self.http_post_config['post_image'] = False
-            
-
-        for i in range(0, len(config_data['testSequences'])):
-            (ok, error) = self.transmit(config_data['testSequences'][i])
-            if not ok:
-                logging.error(error)
-
-        return (True, '')
+            with open('./config/config.json') as data:
+                config_data = json.loads(data.read())
+            data.close()
+            self.update_config(config_data)
+        except:
+            logging.error('Problem opening default configuration: config/config.json')
 
 
     def update_config(self, config_data):
-        # if I have a major config change, just reset everything
-        if self.ip != config_data['frapi']['ip'] or self.port != str(config_data['frapi']['port']) or\
-            self.api_key != config_data['frapi']['api_key']:
+        self.mtx.acquire()
+        (ok, error, new_transmissions, ended_transmissions) = self.config.update_config(config_data)
+        if not ok:
+            self.mtx.release()
+            return (ok, error)
 
-            self.config_data = None
-            return self.config(config_data)
+        for transmission in ended_transmissions:
+            self.end_transmission(transmission, close_from_socket = False)
 
-        if config_data['frapi'].get('output') is not None:
-            self.save_json_config = config_data['frapi']['output'].get('json', None)
-            self.http_post_config = config_data['frapi']['output'].get('http_post', None)
-        else:
-            self.save_json_config = None
-            self.http_post_config = None
-
-        self.min_confidence = config_data['frapi'].get('minConfidence', 0)
-        
-        if self.save_json_config is not None:
-            if self.save_json_config['dir'] is None:
-                self.save_json_config['dir'] = './out_json/'
-            
-            if self.save_json_config['node_frames'] is None:
-                self.save_json_config['node_frames'] = 15
-
-        if self.http_post_config is not None:
-            if self.http_post_config['url'] is None:
-                logging.error('Need to inform HTTP Post route if http-post was selected as output.')
-                return (False, 'Need to inform HTTP Post route if http-post was selected as output.')
-
-            if self.http_post_config['post_image'] is None:
-                self.http_post_config['post_image'] = False
-            
-
-        # find the streams that ended, and the ones that are new
-        list_removed = []
-        new_labels = []
-        for seq in config_data['testSequences']:
-            if seq.get('label') is not None:
-                new_labels.append(seq.get('label'))
-
-        old_labels = self.streams.keys()
-        for old in old_labels:
-            if old not in new_labels:
-                list_removed.append(old)
-
-        list_added = []
-        for new_video in config_data['testSequences']:
-            if new_video.get('label') is None:
-                continue
-            if new_video['label'] not in old_labels:
-                list_added.append(new_video)
-
-        for old in list_removed:
-            self.end_transmission(old, close_from_socket = False)
-
-        for new_video in list_added:
-            (ok, error) = self.transmit(new_video)
+        for transmission in new_transmissions:
+            (ok, error) = self.transmit(transmission)
             if not ok:
                 logging.error(error)
 
-        self.config_data = config_data
-
+        self.mtx.release()
         return (True, None)
-
-
-    def get_config_data(self):
-        return self.config_data
 
 
     def transmit(self, config_data):
@@ -165,7 +76,7 @@ class FrapiClient():
         if config_data.get('tempCoherence') is not None:
             self.stream_sliding_window[label] = config_data['tempCoherence'].get('tempWindow', 15)
             method = None
-            threshold = config_data['tempCoherence'].get('threshold', self.min_confidence)
+            threshold = config_data['tempCoherence'].get('threshold', self.config.min_confidence)
             method_name = config_data['tempCoherence'].get('method', 'hardThreshold')
 
             if method_name == 'hardThreshold':
@@ -179,7 +90,7 @@ class FrapiClient():
 
         self.num_streams = self.num_streams + 1
         ws_stream = websocket_frapi.WebSocketFrapi()
-        ws_url = 'ws://' + self.ip + ':' + self.port + '/recognize?api_key=' + self.api_key
+        ws_url = 'ws://' + self.config.ip + ':' + self.config.port + '/recognize?api_key=' + self.config.api_key
         (ok, error) = ws_stream.config(config_data, ws_url, label, self)
         
         if not ok:
@@ -197,18 +108,18 @@ class FrapiClient():
             return
         
         if image is not None and 'people' in ores and stream_label in self.stream_results_batch:
-            post_image = self.http_post_config is not None and len(ores['people']) > 0
+            post_image = self.config.http_post_config is not None and len(ores['people']) > 0
 
-            if self.stream_sliding_window[stream_label] > 1 and (self.save_json_config is not None or post_image):
+            if self.stream_sliding_window[stream_label] > 1 and (self.config.save_json_config is not None or post_image):
                 ores = self.stream_temp_coherence[stream_label].add_frame(ores, min_confidence=-0.8)
 
             if post_image or self.stream_plot[stream_label]:
                 debug_image = self.plot_recognition_info(image, ores, stream_label)
 
             # the output is only activate if there is someone recognized.
-            if self.save_json_config is not None:
+            if self.config.save_json_config is not None:
                 self.stream_results_batch[stream_label].append(ores)
-                if len(self.stream_results_batch[stream_label]) >= self.save_json_config['node_frames']:
+                if len(self.stream_results_batch[stream_label]) >= self.config.save_json_config['node_frames']:
                     self.save_json_results(stream_label)
 
             if post_image:
@@ -221,16 +132,16 @@ class FrapiClient():
         otherwise is a multiform/data.
         """
         try:
-            if not self.http_post_config['post_image']:
-                requests.post(self.http_post_config['url'], data=json.dumps(result), headers={'Content-type': 'application/json'})
+            if not self.config.http_post_config['post_image']:
+                requests.post(self.config.http_post_config['url'], data=json.dumps(result), headers={'Content-type': 'application/json'})
             else:
                 cv2.imwrite('debug_image.jpg', debug_image)
                 m = MultipartEncoder(fields={'image': ('filename', open('debug_image.jpg', 'rb')), 
                                          'recognition': json.dumps(result)})
-                res = requests.post(self.http_post_config['url'], data=m, 
+                res = requests.post(self.config.http_post_config['url'], data=m, 
                         headers={'Content-Type': m.content_type})
         except:
-            logging.warn('Post result to url'+self.http_post_config['url']+' failed!');
+            logging.warn('Post result to url'+self.config.http_post_config['url']+' failed!');
         
 
     def save_json_results(self, stream_label):
@@ -238,7 +149,7 @@ class FrapiClient():
         if stream_label not in self.streams:
             print('Stream', stream_label, 'already closed.')
             return
-        with open(self.save_json_config['dir']+'/'+file_name, 'w') as fp:
+        with open(self.config.save_json_config['dir']+'/'+file_name, 'w') as fp:
             json.dump(self.stream_results_batch[stream_label], fp, indent=4, separators=(',', ': '))
 
         self.stream_results_batch[stream_label].clear()
@@ -312,9 +223,9 @@ class FrapiClient():
             del self.stream_temp_coherence[stream_label]
         self.num_streams = self.num_streams - 1
 
-        for seq in self.config_data['testSequences']:
+        for seq in self.config.config_data['testSequences']:
             if seq['label'] == stream_label:
-                self.config_data['testSequences'].remove(seq)
+                self.config.config_data['testSequences'].remove(seq)
                 break
 
         cv2.destroyAllWindows()
