@@ -76,7 +76,7 @@ class Config():
         return (True, '', list_streams, [])
 
 
-    def update_config(self, config_data):
+    def update_config(self, config_data, running_streams=[], running_streams_url=[]):
         # if I have a major config change, just reset everything
         if self.ip != config_data['frapi']['ip'] or self.port != str(config_data['frapi']['port']) or\
             self.api_key != config_data['frapi']['api_key']:
@@ -113,25 +113,51 @@ class Config():
         # find the streams that ended, and the ones that are new
         list_removed = []
         new_labels = []
+        new_urls = []
         for seq in config_data['testSequences']:
             if seq.get('label') is not None:
                 new_labels.append(seq.get('label'))
+                if seq.get('video_file') is not None:
+                    new_urls.append(seq['video_file'])
+                elif seq.get('camera_url') is not None:
+                    new_urls.append(seq['camera_url'])
+                elif seq.get('image_dir') is not None:
+                    new_urls.append(seq['image_dir'])
+                else:
+                    new_urls.append('')
 
-        old_labels = []
-        for seq in self.config_data['testSequences']:
-            if seq.get('label') is not None:
-                old_labels.append(seq.get('label'))
+        old_labels = running_streams
+        old_urls = running_streams_url
 
-        for old in old_labels:
-            if old not in new_labels:
-                list_removed.append(old)
+        for i in range(0,len(old_labels)):
+            old_url = old_urls[i]
+            old_label = old_labels[i]
+            old_remains = False
+            for j in range(0,len(new_labels)):
+                # If I change the url or the label, restart the stream
+                if old_url == new_urls[j] and old_label == new_labels[j]:
+                    old_remains = True
+                    break
+
+            if old_remains == False:
+                list_removed.append(old_label)
+
 
         list_added = []
-        for new_video in config_data['testSequences']:
-            if new_video.get('label') is None:
-                continue
-            if new_video['label'] not in old_labels:
-                list_added.append(new_video)
+        for i in range(0,len(new_labels)):
+            new_url = new_urls[i]
+            new_label = new_labels[i]
+            add_stream = True
+            for j in range(0,len(old_labels)):
+                if new_url == old_urls[j] and new_label == old_labels[j]:
+                    add_stream = False
+                    break
+
+            if add_stream:
+                for seq in config_data['testSequences']:
+                    if seq.get('label') == new_label:
+                        list_added.append(seq)
+                        break
 
         self.config_data = config_data
 

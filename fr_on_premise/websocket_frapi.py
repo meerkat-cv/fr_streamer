@@ -17,6 +17,7 @@ class WebSocketFrapi(WebSocketClient):
         self.stream_label = None
         self.closing = False
         self.ws_url = None
+        self.video_url = None
         
 
     def _on_message(self, msg):
@@ -28,6 +29,7 @@ class WebSocketFrapi(WebSocketClient):
             if 'error' in ores:
                 logging.error('Problem with server: '+ores['error'])
                 self.close()
+                self.client.end_transmission(self.stream_label, close_from_socket = True)
             else:
                 self.client.on_message(self.original_frame, ores, self.stream_label)
                 self.call_stream()
@@ -46,13 +48,26 @@ class WebSocketFrapi(WebSocketClient):
         self.ws_url = ws_url
         self.video = video_stream.load_from_config(config_data)
         self.client = client
-        self.stream_label = stream_label
+        self.stream_label = str(stream_label)
         if self.video.isOpened() == False:
             logging.error (False, 'Problem opening '+stream_label)
 
         self.connect(ws_url)
+        
+        if config_data.get('video_file') is not None:
+            self.video_url = config_data['video_file']
+        elif config_data.get('camera_url') is not None:
+            self.video_url = config_data['camera_url']
+        elif config_data.get('image_dir') is not None:
+            self.video_url = config_data['image_dir']
+        else:
+            self.video_url = ''
 
         return (True, '')
+
+
+    def get_video_url(self):
+        return self.video_url
 
 
     def send(self, data):
@@ -63,7 +78,7 @@ class WebSocketFrapi(WebSocketClient):
             return
 
         self._ws_connection.write_message(data, binary=True)
-
+        
 
     def close(self):
         """Close connection.
@@ -79,7 +94,6 @@ class WebSocketFrapi(WebSocketClient):
 
         self.video.close()
         self._ws_connection.close()
-        self.client.end_transmission(self.stream_label, close_from_socket = True)
 
 
     def _on_connection_success(self):
