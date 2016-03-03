@@ -64,6 +64,8 @@ class TempCoherence():
             for j,label in enumerate(curr_labels):
                 if len(labels_costs) == 0:
                     labels_costs[label] = [ self.costs[i][j] ]
+                elif labels_costs.get(label) is None:
+                    labels_costs[label] = [ self.costs[i][j] ]
                 else:
                     labels_costs[label].append(self.costs[i][j])
 
@@ -77,10 +79,13 @@ class TempCoherence():
 
     def calc_score(self, costs_vec):
         if self.method == CoherenceMethod.score_mean:
-            return statistics.mean(costs_vec)
+            return sum(costs_vec)/self.temp_window
 
         if self.method == CoherenceMethod.score_median:
-            return statistics.median(costs_vec)
+            if len(costs_vec) < self.temp_window/2:
+                return 0
+            else:
+                return statistics.median(costs_vec)
 
         logging.error('Undefined TempCoherence method.')
 
