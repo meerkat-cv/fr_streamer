@@ -41,7 +41,7 @@ class WebSocketFrapi(WebSocketClient):
 
         self.stream()
         deadline = time.time() + 10
-        self.time_out_stream = ioloop.IOLoop().instance().add_timeout(deadline, self.close)
+        self.time_out_stream = ioloop.IOLoop().instance().add_timeout(deadline, self.end_stream)
 
     
     def config(self, config_data, ws_url, stream_label, client):
@@ -80,6 +80,11 @@ class WebSocketFrapi(WebSocketClient):
         self._ws_connection.write_message(data, binary=True)
         
 
+    def end_stream(self):
+        self.close()
+        self.client.end_transmission(self.stream_label, close_from_socket = True)
+
+
     def close(self):
         """Close connection.
         """
@@ -87,7 +92,7 @@ class WebSocketFrapi(WebSocketClient):
         if not self._ws_connection:
             raise RuntimeError('Web socket connection is already closed.')
 
-        logging.info('Closing connection of stream', self.stream_label)
+        logging.warn('Closing connection of stream '+self.stream_label)
         self.closing = True
         if self.time_out_stream is not None:
             ioloop.IOLoop().instance().remove_timeout(self.time_out_stream)
