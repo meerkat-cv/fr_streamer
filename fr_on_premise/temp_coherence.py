@@ -10,7 +10,7 @@ class CoherenceMethod(IntEnum):
 
 class TempCoherence():
 
-    def __init__(self, temp_window, method, threshold):
+    def __init__(self, temp_window, method, threshold, stream_label):
         self.last_pos = 0
         self.temp_window = temp_window
         self.past = temp_window/2 + 1
@@ -20,6 +20,7 @@ class TempCoherence():
 
         self.method = method
         self.threshold = threshold
+        self.stream_label = stream_label
 
 
     def hard_threshold_method(self):
@@ -86,7 +87,7 @@ class TempCoherence():
         return 0.5
 
 
-    def add_frame(self, ores, min_confidence):
+    def add_frame(self, ores):
         (self.labels[self.last_pos], self.costs[self.last_pos]) = self.extract_info(ores)
         self.last_pos = (self.last_pos+1) % self.temp_window;
 
@@ -104,7 +105,7 @@ class TempCoherence():
             d = {'recognition': {'predictedLabel': p}}
             detections.append(d)
 
-        res = {'people': detections}
+        res = {'people': detections, 'stream_label': self.stream_label}
 
         return res
 

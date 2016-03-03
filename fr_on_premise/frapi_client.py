@@ -2,7 +2,7 @@ from fr_on_premise import websocket_frapi
 from tornado import ioloop
 from threading import Thread, Lock
 from fr_on_premise.temp_coherence import TempCoherence, CoherenceMethod
-from fr_on_premise.config import Config, Singleton
+from fr_on_premise.config import Config
 import json
 import cv2
 import time
@@ -10,6 +10,8 @@ import requests, logging
 from io import StringIO
 from requests_toolbelt import MultipartEncoder
 
+import traceback
+import sys
 
 class Singleton(object):
     __singleton_lock = Lock()
@@ -48,7 +50,13 @@ class FrapiClient(Singleton):
 
     def update_config(self, config_data):
         self.mtx.acquire()
-        (ok, error, new_transmissions, ended_transmissions) = self.config.update_config(config_data)
+        streams_url = []
+        streams_label = []
+        for s in list(self.streams.keys()):
+            streams_url.append(self.streams[s].get_video_url())
+            streams_label.append(s)
+
+        (ok, error, new_transmissions, ended_transmissions) = self.config.update_config(config_data, streams_label, streams_url)
         if not ok:
             self.mtx.release()
             return (ok, error)
@@ -72,7 +80,7 @@ class FrapiClient(Singleton):
 
         self.stream_results_batch[label] = []
         self.stream_plot[label] = config_data.get('plotStream', False)
-        
+
         if config_data.get('tempCoherence') is not None:
             self.stream_sliding_window[label] = config_data['tempCoherence'].get('tempWindow', 15)
             method = None
@@ -86,7 +94,8 @@ class FrapiClient(Singleton):
             else:
                 method = CoherenceMethod.score_median
 
-            self.stream_temp_coherence[label] = TempCoherence(self.stream_sliding_window[label], method, threshold)
+            self.stream_temp_coherence[label] = TempCoherence(self.stream_sliding_window[label], method, threshold, label)
+            
 
         self.num_streams = self.num_streams + 1
         ws_stream = websocket_frapi.WebSocketFrapi()
@@ -103,15 +112,15 @@ class FrapiClient(Singleton):
 
 
     def on_message(self, image, ores, stream_label):
-        if stream_label not in self.streams:
-            logging.error('Stream', stream_label, 'already closed.')
+        if stream_label not in list(self.streams.keys()):
+            logging.error('Stream '+stream_label+' already closed.')
             return
         
         if image is not None and 'people' in ores and stream_label in self.stream_results_batch:
             post_image = self.config.http_post_config is not None and len(ores['people']) > 0
 
-            if self.stream_sliding_window[stream_label] > 1 and (self.config.save_json_config is not None or post_image):
-                ores = self.stream_temp_coherence[stream_label].add_frame(ores, min_confidence=-0.8)
+            if self.stream_sliding_window.get(stream_label) is not None and (self.config.save_json_config is not None or post_image):
+                ores = self.stream_temp_coherence[stream_label].add_frame(ores)
 
             if post_image or self.stream_plot[stream_label]:
                 debug_image = self.plot_recognition_info(image, ores, stream_label)
@@ -122,7 +131,7 @@ class FrapiClient(Singleton):
                 if len(self.stream_results_batch[stream_label]) >= self.config.save_json_config['node_frames']:
                     self.save_json_results(stream_label)
 
-            if post_image:
+            if post_image and len(ores['people']) > 0:
                 self.post_result(ores, debug_image)
 
     def post_result(self, result, debug_image):
@@ -141,13 +150,13 @@ class FrapiClient(Singleton):
                 res = requests.post(self.config.http_post_config['url'], data=m, 
                         headers={'Content-Type': m.content_type})
         except:
-            logging.warn('Post result to url'+self.config.http_post_config['url']+' failed!');
+            logging.warn('Post result to url '+self.config.http_post_config['url']+' failed!');
         
 
     def save_json_results(self, stream_label):
         file_name = stream_label+'_'+str(time.time())+'.json'
-        if stream_label not in self.streams:
-            logging.error('Stream', stream_label, 'already closed.')
+        if stream_label not in list(self.streams.keys()):
+            logging.error('Stream '+stream_label+' already closed.')
             return
         with open(self.config.save_json_config['dir']+'/'+file_name, 'w') as fp:
             json.dump(self.stream_results_batch[stream_label], fp, indent=4, separators=(',', ': '))
@@ -186,7 +195,7 @@ class FrapiClient(Singleton):
 
 
     def get_stream_label(self, config_data):
-        label = config_data['label']
+        label = str(config_data['label'])
 
         if label is None:
             return (False, 'Label not defined', '')
@@ -209,16 +218,12 @@ class FrapiClient(Singleton):
 
         if not close_from_socket and self.streams.get(stream_label) is not None:
             self.streams[stream_label].close()
-            # if I'm closing from the frapi_client, I will enter in
-            # this function again, called by stream.close(). So I'm
-            # returning now, and when stream.close() call me again, 
-            # the rest of the closing process will continue.
-            return
-
+            
         if stream_label in self.streams.keys():
             del self.streams[stream_label]
         del self.stream_results_batch[stream_label]
-        del self.stream_sliding_window[stream_label]
+        if self.stream_sliding_window.get(stream_label) is not None:
+            del self.stream_sliding_window[stream_label]
         if stream_label in self.stream_temp_coherence:
             del self.stream_temp_coherence[stream_label]
         self.num_streams = self.num_streams - 1
