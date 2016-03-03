@@ -121,6 +121,8 @@ class FrapiClient(Singleton):
 
             if self.stream_sliding_window.get(stream_label) is not None and (self.config.save_json_config is not None or post_image):
                 ores = self.stream_temp_coherence[stream_label].add_frame(ores)
+            else:
+                ores['stream_label'] = stream_label
 
             if post_image or self.stream_plot[stream_label]:
                 debug_image = self.plot_recognition_info(image, ores, stream_label)
