@@ -7,6 +7,7 @@ import json
 import time
 import cv2
 from threading import Lock
+from fr_on_premise.frapi_client import FrapiClient
 
 class StreamOutputWebSocket(tornado.websocket.WebSocketHandler):
     def __init__(self, application, request, **kwargs):
@@ -14,6 +15,7 @@ class StreamOutputWebSocket(tornado.websocket.WebSocketHandler):
                                                                       **kwargs)
         self.mtx = Lock()
         self.is_open = False
+        self.frapi_client = FrapiClient.instance()
         
 
     def check_origin(self, origin):
@@ -23,9 +25,14 @@ class StreamOutputWebSocket(tornado.websocket.WebSocketHandler):
     def open(self):
         print('open')
         self.is_open = True
+        self.frapi_client.add_stream_output_ws(self)
 
 
     def send_msg(self, recog_result, frame):
+        # enforce serial connection
+        if self.is_open == False:
+            return
+
         self.mtx.acquire()
         try:
             self.write_message(json.dumps(recog_result))
@@ -44,3 +51,4 @@ class StreamOutputWebSocket(tornado.websocket.WebSocketHandler):
     def on_close(self):
         print('on_close')
         self.is_open = False
+        self.frapi_client.remove_stream_output_ws(self)

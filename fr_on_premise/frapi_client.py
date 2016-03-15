@@ -38,6 +38,7 @@ class FrapiClient(Singleton):
         self.stream_results_batch = {}
         self.num_streams = 0
         self.config = Config()
+        self.out_stream_ws = []
 
         try:
             with open('./config/config.json') as data:
@@ -136,6 +137,11 @@ class FrapiClient(Singleton):
             if post_image and len(ores['people']) > 0:
                 self.post_result(ores, debug_image)
 
+            # send the results to all the output websockets
+            for ws in self.out_stream_ws:
+                ws.send_msg(ores, debug_image)
+
+
     def post_result(self, result, debug_image):
         """
         This function posts the result that is passed to the configured
@@ -212,6 +218,17 @@ class FrapiClient(Singleton):
             self.num_streams = 0;
         
         return self.num_streams
+
+
+    def remove_stream_output_ws(self, stream_add):
+        if stream_add in self.stream_ws:
+            self.out_stream_ws.remove(stream_add)
+        else:
+            print('problem removing inexisting StreamOutputWebSocket: '+stream_add)
+
+
+    def add_stream_output_ws(self, stream_add):
+        self.out_stream_ws.append(stream_add)
         
 
     def end_transmission(self, stream_label, close_from_socket):
