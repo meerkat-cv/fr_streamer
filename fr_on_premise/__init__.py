@@ -5,6 +5,7 @@ from flask import Flask, jsonify
 from flask.ext.cors import CORS
 from fr_on_premise.frapi_client import FrapiClient
 from fr_on_premise.video_stream import VideoStream
+from fr_on_premise.ws.stream_output_ws import StreamOutputWebSocket
 import tornado
 import logging
 import os
@@ -49,7 +50,9 @@ def build_app():
     tr = WSGIContainer(app)
     tornado_application = tornado.web.Application(
     [
+        (r"/stream_output", StreamOutputWebSocket),
         (r".*", FallbackHandler, dict(fallback=tr))
     ])
+    
 
     return tornado_application
