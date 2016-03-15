@@ -4,6 +4,19 @@ import json
 import time
 import cv2
 import logging
+import numpy as np
+
+def read_cvimage_from_bytes(stream):
+    try:
+        arr = np.asarray(bytearray(stream), dtype=np.uint8)
+        image = cv2.imdecode(arr, cv2.IMREAD_COLOR)
+        height, width = image.shape[:2]
+        if height <= 0 or width <= 0:
+            raise Exception('Invalid image file from stream')
+    except:
+        raise Exception('Invalid image file from stream')
+
+    return image
 
 
 class WebSocketFrapi(WebSocketClient):
@@ -23,9 +36,15 @@ class WebSocketFrapi(WebSocketClient):
         if self.closing == True:
             return
         else:
-            # ores = json.loads(msg)
-            print('on message')
-            print('message type:', type(msg))
+            if isinstance(msg, str):
+                print('on message', msg)
+            elif isinstance(msg, bytes):
+                im = read_cvimage_from_bytes(msg)
+                cv2.imshow("Frame", im)
+                cv2.waitKey(1)
+                print('on message binary')
+            else:
+                print('Bad message type: ', type(msg))
 
 
     
