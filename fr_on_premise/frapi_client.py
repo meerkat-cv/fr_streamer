@@ -221,7 +221,7 @@ class FrapiClient(Singleton):
 
 
     def remove_stream_output_ws(self, stream_add):
-        if stream_add in self.stream_ws:
+        if stream_add in self.out_stream_ws:
             self.out_stream_ws.remove(stream_add)
         else:
             print('problem removing inexisting StreamOutputWebSocket: '+stream_add)
