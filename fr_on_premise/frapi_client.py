@@ -139,7 +139,10 @@ class FrapiClient(Singleton):
 
             # send the results to all the output websockets
             for ws in self.out_stream_ws:
-                ws.send_msg(ores, debug_image)
+                if post_image or self.stream_plot[stream_label]:
+                    ws.send_msg(ores, debug_image)
+                else:
+                    ws.send_msg(ores, image)
 
 
     def post_result(self, result, debug_image):
@@ -237,6 +240,12 @@ class FrapiClient(Singleton):
 
         if not close_from_socket and self.streams.get(stream_label) is not None:
             self.streams[stream_label].close()
+
+        if self.stream_plot[stream_label]:
+            cv2.destroyAllWindows()
+            cv2.waitKey(1)
+
+        # self.stream_plot.remove(stream_label)
             
         if stream_label in self.streams.keys():
             del self.streams[stream_label]
@@ -252,8 +261,7 @@ class FrapiClient(Singleton):
                 self.config.config_data['testSequences'].remove(seq)
                 break
 
-        cv2.destroyAllWindows()
-        cv2.waitKey(1)
+        
 
 
     def end_transmissions(self):
