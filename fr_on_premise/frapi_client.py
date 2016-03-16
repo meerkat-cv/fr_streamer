@@ -38,7 +38,7 @@ class FrapiClient(Singleton):
         self.stream_results_batch = {}
         self.num_streams = 0
         self.config = Config()
-        self.out_stream_ws = []
+        self.out_stream_ws = {}
 
         try:
             with open('./config/config.json') as data:
@@ -138,11 +138,11 @@ class FrapiClient(Singleton):
                 self.post_result(ores, debug_image)
 
             # send the results to all the output websockets
-            for ws in self.out_stream_ws:
+            if stream_label in self.out_stream_ws:
                 if post_image or self.stream_plot[stream_label]:
-                    ws.send_msg(ores, debug_image)
+                    self.out_stream_ws[stream_label].send_msg(ores, debug_image)
                 else:
-                    ws.send_msg(ores, image)
+                    self.out_stream_ws[stream_label].send_msg(ores, image)
 
 
     def post_result(self, result, debug_image):
@@ -223,15 +223,19 @@ class FrapiClient(Singleton):
         return self.num_streams
 
 
-    def remove_stream_output_ws(self, stream_add):
+    def get_active_stream_labels(self):
+        return list(self.streams.keys())
+
+
+    def remove_stream_output_ws(self, stream_label):
         if stream_add in self.out_stream_ws:
-            self.out_stream_ws.remove(stream_add)
+            del self.out_stream_ws[stream_label]
         else:
-            print('problem removing inexisting StreamOutputWebSocket: '+stream_add)
+            logging.('problem removing inexisting StreamOutputWebSocket: '+stream_label)
 
 
-    def add_stream_output_ws(self, stream_add):
-        self.out_stream_ws.append(stream_add)
+    def add_stream_output_ws(self, stream_add, stream_label):
+        self.out_stream_ws[stream_label] = stream_add
         
 
     def end_transmission(self, stream_label, close_from_socket):

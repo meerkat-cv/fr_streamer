@@ -5,7 +5,6 @@ from flask import Flask, jsonify
 from flask.ext.cors import CORS
 from fr_on_premise.frapi_client import FrapiClient
 from fr_on_premise.video_stream import VideoStream
-from fr_on_premise.ws.stream_output_ws import StreamOutputWebSocket
 import tornado
 import logging
 import os
@@ -37,9 +36,11 @@ def build_app():
 
     print('Registering views')
     from fr_on_premise.views.config_view import ConfigView
+    from fr_on_premise.views.stream_output_view import StreamOutputView
     import fr_on_premise.views.error_view
 
     ConfigView.register(app)
+    StreamOutputView.register(app)
     
     # app.wsgi_app = ProxyFix(app.wsgi_app)
     # logging.basicConfig(
@@ -47,10 +48,11 @@ def build_app():
 
     app.debug = app.config["APP_DEBUG"]
 
+    from fr_on_premise.ws.stream_output_ws import StreamOutputWebSocket
     tr = WSGIContainer(app)
     tornado_application = tornado.web.Application(
     [
-        (r"/stream_output", StreamOutputWebSocket),
+        (r"/stream_ws", StreamOutputWebSocket),
         (r".*", FallbackHandler, dict(fallback=tr))
     ])
     
