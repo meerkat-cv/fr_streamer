@@ -2,6 +2,7 @@ import json
 import time
 import cv2
 import os
+import logging
 from pprint import pprint
 from threading import Thread, Lock, Event
 
@@ -87,7 +88,7 @@ class VideoFile(VideoStream):
     def open(self, video_name):
         self.video = cv2.VideoCapture(video_name)
         if self.video.isOpened() == False:
-            logging.error('VideoStream::open() -- problem opening', video_name)
+            logging.error('VideoStream::open() -- problem opening '+video_name)
         else:
             self.is_opened = True
 
@@ -201,7 +202,7 @@ class CameraUrl(VideoStream):
             self.video = cv2.VideoCapture(camera_url)
 
         if self.video.isOpened() == False:
-            logging.error('VideoStream::open() -- problem opening', camera_url)
+            logging.error('VideoStream::open() -- problem opening ' + camera_url)
         else:
             self.is_opened = True
 
