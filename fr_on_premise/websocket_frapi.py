@@ -40,7 +40,7 @@ class WebSocketFrapi(WebSocketClient):
             ioloop.IOLoop().instance().remove_timeout(self.time_out_stream)
 
         self.stream()
-        deadline = time.time() + 10
+        deadline = time.time() + 300
         self.time_out_stream = ioloop.IOLoop().instance().add_timeout(deadline, self.end_stream)
 
     
