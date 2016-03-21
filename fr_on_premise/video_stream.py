@@ -232,7 +232,7 @@ class CameraUrl(VideoStream):
         # get_next_frame is called before that, it will return an invalid
         # image
         start = time.time()
-        while self.frame is None and (time.time()-start) < 5:
+        while self.frame is None and (time.time()-start) < 45:
             time.sleep(0.05)
         
 
