@@ -1,20 +1,14 @@
 {
 	"testSequences": [
 		{
-			"camera_url": "0", "label": "Webcam", "plotStream": true, 
-			"tempCoherence": 
-			{
-				"tempWindow": 15,
-				"method": "scoreMean",
-				"threshold": -0.8
-			}
+			"camera_url": "0", "label": "Webcam", "plotStream": true 
 		}
 	],
 
 	"frapi": 
 	{
-		"api_key": "31a5d10dd5725b32f58d1347278ea335",
-		"ip": "localhost",
+		"api_key": "31073ec069755973e0787239a26523c5",
+		"ip": "192.168.25.181",
 		"port": 4444,
 		"minConfidence": 0.8,
 		"output": {

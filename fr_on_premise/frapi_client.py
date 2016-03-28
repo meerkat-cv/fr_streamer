@@ -110,6 +110,11 @@ class FrapiClient(Singleton):
 
         return (ok, error)
 
+    def plot_fps(self, image, stream):
+        label = "FPS: {0:2.2f}".format(stream.get_current_fps())
+        cv2.putText(image, label, (20, image.shape[0]-20), cv2.FONT_HERSHEY_PLAIN, 0.8, (200,200,200), 1)
+
+
 
     def on_message(self, image, ores, stream_label):
         if stream_label not in list(self.streams.keys()):
@@ -126,6 +131,7 @@ class FrapiClient(Singleton):
 
             if post_image or self.stream_plot[stream_label]:
                 debug_image = self.plot_recognition_info(image, ores, stream_label)
+
 
             # the output is only activate if there is someone recognized.
             if self.config.save_json_config is not None:
@@ -188,6 +194,8 @@ class FrapiClient(Singleton):
             text_pt = (int(tl[0]), int(tl[1])-10)
             cv2.rectangle(image, (text_pt[0], text_pt[1]-text_size[1]-4), (text_pt[0] + text_size[0], text_pt[1]+4), (165, 142, 254), -1)
             cv2.putText(image, label, text_pt, font_face, 1, (255, 255, 255), 2)
+
+        self.plot_fps(image, self.streams[stream_label].video)
 
         if self.stream_plot[stream_label]:
             cv2.imshow(stream_label, image)
