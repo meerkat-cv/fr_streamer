@@ -128,10 +128,16 @@ class FrapiClient(Singleton):
                 ores = self.stream_temp_coherence[stream_label].add_frame(ores)
             else:
                 ores['stream_label'] = stream_label
+                to_remove = []
+                for idx, people in enumerate(ores['people']):
+                    if people['recognition']['confidence'] < self.config.min_confidence:
+                        to_remove.append(idx)
 
+                for people in to_remove:
+                    del ores['people'][people]
+            
             if post_image or self.stream_plot[stream_label]:
                 debug_image = self.plot_recognition_info(image, ores, stream_label)
-
 
             # the output is only activate if there is someone recognized.
             if self.config.save_json_config is not None:
