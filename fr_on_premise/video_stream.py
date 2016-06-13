@@ -24,11 +24,16 @@ def load_from_config(config_data):
 
 
 class VideoStream():
+    tick_frequency = cv2.getTickFrequency()
+    FPS_N_FRAMES = 10
 
     def __init__(self):
         is_opened = False
         self.curr_frame = 0
         self.end_frame = -1
+        self.fps_history = [10 for x in range(10)]
+        self.ifps = 0
+        self.last_tick = cv2.getTickCount()
         
 
     def read_video_stream_config_file(self, config_file):
@@ -37,6 +42,14 @@ class VideoStream():
 
         self.read_video_stream(config_data)
 
+    def compute_fps(self):
+        fps = VideoStream.tick_frequency/(cv2.getTickCount() - self.last_tick)
+        self.fps_history[self.ifps % VideoStream.FPS_N_FRAMES] = fps
+        self.ifps = self.ifps+1
+        self.last_tick = cv2.getTickCount()
+
+    def get_current_fps(self):
+        return sum(self.fps_history)/len(self.fps_history)
 
     def get_next_frame(self):
         logging.error('You are using VideoStream wrong.')
@@ -56,13 +69,10 @@ class VideoStream():
             return True
 
 
-    
-
-
-
 class VideoFile(VideoStream):
 
     def __init__(self, config_data):
+        super().__init__()
         self.step_frame = 1
         self.start_frame = 1
         self.end_frame = -1
@@ -104,6 +114,7 @@ class VideoFile(VideoStream):
 
 
     def get_next_frame(self):
+        self.compute_fps()
         if self.is_opened == False or self.has_ended():
             return None
 
@@ -183,6 +194,7 @@ class ImageDir(VideoStream):
 class CameraUrl(VideoStream):
 
     def __init__(self, config_data):
+        super().__init__()
         self.curr_frame = 0
         self.end_frame = -1
         self.frame = None
@@ -232,7 +244,7 @@ class CameraUrl(VideoStream):
         # get_next_frame is called before that, it will return an invalid
         # image
         start = time.time()
-        while self.frame is None and (time.time()-start) < 5:
+        while self.frame is None and (time.time()-start) < 45:
             time.sleep(0.05)
         
 
@@ -247,6 +259,7 @@ class CameraUrl(VideoStream):
 
 
     def get_next_frame(self):
+        self.compute_fps()
         if self.is_opened == False or self.has_ended():
             return None
 

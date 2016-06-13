@@ -12,8 +12,8 @@
 
 	"frapi": 
 	{
-		"api_key": "31a5d10dd5725b32f58d1347278ea335",
-		"ip": "localhost",
+		"api_key": "31073ec069755973e0787239a26523c5",
+		"ip": "192.168.25.181",
 		"port": 4444,
 		"output": {
 			"json": {
