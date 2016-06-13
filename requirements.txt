@@ -5,6 +5,5 @@ Flask-Cors == 2.1.0
 numpy == 1.10.2
 requests == 2.4.3
 tornado == 4.3
-cv2 == 1.0
 protobuf == 3.0.0b2
 requests_toolbelt == 0.6.0
