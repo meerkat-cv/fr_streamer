@@ -1,0 +1,23 @@
+import base64
+import flask
+from flask import request, abort
+from flask.ext.classy import FlaskView, route, request
+from fr_on_premise.controllers.frapi_client_controller import *
+
+
+class StreamOutputView(FlaskView):
+    route_base = '/'
+
+    def __init__(self):
+        self.frapi_client_controller = FrapiClientController()
+
+    @route('/stream_output', methods=['GET'])
+    def plot_streams(self):
+        """
+        Show the all the camera streams.
+        """
+        labels = self.frapi_client_controller.get_stream_labels();
+        stream_labels = {'label': labels}
+        
+        return flask.render_template("stream_output.html", stream_labels=stream_labels)
+        

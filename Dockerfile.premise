@@ -1,0 +1,53 @@
+FROM ubuntu:14.04
+
+# install necessary packages
+RUN apt-get update 
+RUN apt-get -y install vim
+RUN apt-get -y install cmake
+RUN apt-get -y install python3-dev
+RUN apt-get -y install python3-pip
+RUN apt-get -y install python-pip
+RUN apt-get -y install cmake 
+RUN apt-get -y install libopenblas-dev
+RUN apt-get -y install liblapack-dev
+RUN apt-get -y install nginx
+RUN apt-get -y install unzip
+RUN apt-get -y install libjpeg-dev
+RUN apt-get -y install zlibc zlib1g zlib1g-dev
+RUN apt-get -y install python3-numpy build-essential libjpeg8-dev libjasper-dev libpng12-dev libavcodec-dev libavformat-dev libswscale-dev libgtk2.0-dev
+
+RUN pip3 install virtualenvwrapper 
+RUN pip3 install numpy
+
+# To install the C lib for couchbase
+RUN apt-get -y install wget
+
+# Install the Opencv 3.1 version with Python3 support
+RUN wget https://github.com/Itseez/opencv/archive/3.1.0.zip && \
+    unzip 3.1.0.zip && \
+    cd opencv-3.1.0/ && \
+    cmake -D CMAKE_BUILD_TYPE=RELEASE . && \ 
+    make -j4 && \
+    make install && \
+    rm /3.1.0.zip && \
+    rm -rf /opencv-3.1.0
+
+RUN pip install supervisor --pre
+
+# add code to the container
+ADD . /code
+WORKDIR /code
+# ENV LD_LIBRARY_PATH /code/meerkat_frapi/third_party/py_wrapper/linux/
+ENV SERVER_ENV ON_PREMISE_STREAMER
+
+RUN pip3 install -r requirements.txt
+
+# copy the nginx configuration to the correct location
+RUN cp server/nginx.conf.premise /etc/nginx/nginx.conf
+RUN service nginx stop
+
+RUN ln -sf /dev/stdout /var/log/nginx/access.log
+RUN ln -sf /dev/stderr /var/log/nginx/error.log
+	
+# run the flask server
+CMD supervisord -c server/supervisord.conf

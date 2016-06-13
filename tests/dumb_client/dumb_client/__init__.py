@@ -3,8 +3,7 @@ from tornado.wsgi import WSGIContainer
 from tornado.web import FallbackHandler
 from flask import Flask, jsonify
 from flask.ext.cors import CORS
-from fr_on_premise.frapi_client import FrapiClient
-from fr_on_premise.video_stream import VideoStream
+from dumb_client.main_client import MainClient
 import tornado
 import logging
 import os
@@ -14,7 +13,7 @@ import cv2
 from threading import Thread
 
 
-instance_path = os.path.dirname(os.path.realpath(__file__)) + '/../config/'
+instance_path = os.path.dirname(os.path.realpath(__file__)) + '/../../../config/'
 app = Flask(__name__, instance_relative_config=True, instance_path=instance_path)
 
 def build_app():
@@ -34,27 +33,20 @@ def build_app():
     # from meerkat_frapi.controllers.base_controller import ReverseProxied
     # app.wsgi_app = ReverseProxied(app.wsgi_app)
 
-    print('Registering views')
-    from fr_on_premise.views.config_view import ConfigView
-    from fr_on_premise.views.stream_output_view import StreamOutputView
-    import fr_on_premise.views.error_view
-
-    ConfigView.register(app)
-    StreamOutputView.register(app)
+    # print('Registering views')
+    # from dumb_client.views.streamer_debug_view import StreamerDebugView
     
-    # app.wsgi_app = ProxyFix(app.wsgi_app)
-    # logging.basicConfig(
-    #     level=app.config["LOG_LEVEL"], format='%(asctime)s - %(levelname)s - %(message)s')
-
+    # StreamerDebugView.register(app)
+    
     app.debug = app.config["APP_DEBUG"]
 
-    from fr_on_premise.ws.stream_output_ws import StreamOutputWebSocket
     tr = WSGIContainer(app)
     tornado_application = tornado.web.Application(
     [
-        (r"/stream_ws", StreamOutputWebSocket),
         (r".*", FallbackHandler, dict(fallback=tr))
     ])
     
+    main_client = MainClient()
+    main_client.run()
 
     return tornado_application

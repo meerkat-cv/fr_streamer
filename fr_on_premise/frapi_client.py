@@ -38,6 +38,7 @@ class FrapiClient(Singleton):
         self.stream_results_batch = {}
         self.num_streams = 0
         self.config = Config()
+        self.out_stream_ws = {}
 
         try:
             with open('./config/config.json') as data:
@@ -148,6 +149,14 @@ class FrapiClient(Singleton):
             if post_image and len(ores['people']) > 0:
                 self.post_result(ores, debug_image)
 
+            # send the results to all the output websockets
+            if stream_label in self.out_stream_ws:
+                if post_image or self.stream_plot[stream_label]:
+                    self.out_stream_ws[stream_label].send_msg(ores, debug_image)
+                else:
+                    self.out_stream_ws[stream_label].send_msg(ores, image)
+
+
     def post_result(self, result, debug_image):
         """
         This function posts the result that is passed to the configured
@@ -226,6 +235,21 @@ class FrapiClient(Singleton):
             self.num_streams = 0;
         
         return self.num_streams
+
+
+    def get_active_stream_labels(self):
+        return list(self.streams.keys())
+
+
+    def remove_stream_output_ws(self, stream_label):
+        if stream_add in self.out_stream_ws:
+            del self.out_stream_ws[stream_label]
+        else:
+            logging.error('problem removing inexisting StreamOutputWebSocket: '+stream_label)
+
+
+    def add_stream_output_ws(self, stream_add, stream_label):
+        self.out_stream_ws[stream_label] = stream_add
         
 
     def end_transmission(self, stream_label, close_from_socket):
@@ -239,6 +263,7 @@ class FrapiClient(Singleton):
             cv2.destroyAllWindows()
             cv2.waitKey(1)
 
+        # self.stream_plot.remove(stream_label)
             
         if stream_label in self.streams.keys():
             del self.streams[stream_label]
