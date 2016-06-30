@@ -2,8 +2,8 @@
 The video streamer client for the Meerkat facial recognition system
 
 ### Running (outside docker):
-mkvirtualenv --python=`which python3` --system-site-packages fr_on_premise
-workon fr_on_premise 
+mkvirtualenv --python=`which python3` --system-site-packages fr_streamer
+workon fr_streamer 
 
 ## About
 

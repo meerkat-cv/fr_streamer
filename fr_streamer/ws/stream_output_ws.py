@@ -9,8 +9,8 @@ import time
 import cv2
 import logging
 from threading import Lock
-from fr_on_premise.frapi_client import FrapiClient
-from fr_on_premise import app
+from fr_streamer.frapi_client import FrapiClient
+from fr_streamer import app
 
 class StreamOutputWebSocket(tornado.websocket.WebSocketHandler):
     def __init__(self, application, request, **kwargs):

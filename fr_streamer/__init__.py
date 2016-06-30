@@ -3,8 +3,8 @@ from tornado.wsgi import WSGIContainer
 from tornado.web import FallbackHandler
 from flask import Flask, jsonify
 from flask.ext.cors import CORS
-from fr_on_premise.frapi_client import FrapiClient
-from fr_on_premise.video_stream import VideoStream
+from fr_streamer.frapi_client import FrapiClient
+from fr_streamer.video_stream import VideoStream
 import tornado
 import logging
 import os
@@ -35,9 +35,9 @@ def build_app():
     # app.wsgi_app = ReverseProxied(app.wsgi_app)
 
     print('Registering views')
-    from fr_on_premise.views.config_view import ConfigView
-    from fr_on_premise.views.stream_output_view import StreamOutputView
-    import fr_on_premise.views.error_view
+    from fr_streamer.views.config_view import ConfigView
+    from fr_streamer.views.stream_output_view import StreamOutputView
+    import fr_streamer.views.error_view
 
     ConfigView.register(app)
     StreamOutputView.register(app)
@@ -48,7 +48,7 @@ def build_app():
 
     app.debug = app.config["APP_DEBUG"]
 
-    from fr_on_premise.ws.stream_output_ws import StreamOutputWebSocket
+    from fr_streamer.ws.stream_output_ws import StreamOutputWebSocket
     tr = WSGIContainer(app)
     tornado_application = tornado.web.Application(
     [

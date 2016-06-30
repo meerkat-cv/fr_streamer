@@ -1,8 +1,8 @@
-from fr_on_premise import websocket_frapi
+from fr_streamer import websocket_frapi
 from tornado import ioloop
 from threading import Thread, Lock
-from fr_on_premise.temp_coherence import TempCoherence, CoherenceMethod
-from fr_on_premise.config import Config
+from fr_streamer.temp_coherence import TempCoherence, CoherenceMethod
+from fr_streamer.config import Config
 import json
 import cv2
 import time

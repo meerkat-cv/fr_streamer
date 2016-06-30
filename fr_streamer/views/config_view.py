@@ -2,8 +2,8 @@
 import flask
 from flask import abort
 from flask.ext.classy import FlaskView, route, request
-from fr_on_premise.controllers.config_controller import ConfigController
-from fr_on_premise.views import error_view
+from fr_streamer.controllers.config_controller import ConfigController
+from fr_streamer.views import error_view
 
 # @api.route('/config')
 class ConfigView(FlaskView):

@@ -9,5 +9,5 @@ sudo pip3 install numpy
 
 sudo dpkg -i opencv_3.1.0-1_amd64.deb
 
-cd fr_on_premise_streamer
+cd fr_streamer
 sudo pip3 install -r requirements.txt

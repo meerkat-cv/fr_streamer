@@ -1,5 +1,5 @@
-from fr_on_premise.base_websocket_client import *
-from fr_on_premise import video_stream
+from fr_streamer.base_websocket_client import *
+from fr_streamer import video_stream
 from functools import partial
 import json
 import time

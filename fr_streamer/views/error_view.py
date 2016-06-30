@@ -1,7 +1,7 @@
 import datetime
 import flask
 
-from fr_on_premise import app
+from fr_streamer import app
 
 
 @app.errorhandler(415)

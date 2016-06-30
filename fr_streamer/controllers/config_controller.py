@@ -1,7 +1,7 @@
 import cv2
 import urllib
 import numpy as np
-from fr_on_premise.frapi_client import FrapiClient
+from fr_streamer.frapi_client import FrapiClient
 
 
 class ConfigController():

@@ -2,7 +2,7 @@ import base64
 import flask
 from flask import request, abort
 from flask.ext.classy import FlaskView, route, request
-from fr_on_premise.controllers.frapi_client_controller import *
+from fr_streamer.controllers.frapi_client_controller import *
 
 
 class StreamOutputView(FlaskView):
