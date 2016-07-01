@@ -1,13 +1,15 @@
-<!DOCTYPE HTML>
-<html>
-<head>
-<title>Flask/Gevent WebSocket Test</title>
+{% extends "main_template.html" %}
+{% block content %}
+<section class="content-header">
+  <h1>
+    Live feed of {{ stream_label }}
+  </h1>
     <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
     <script type="text/javascript" charset="utf-8">
         $(document).ready(function(){
             if ("WebSocket" in window) {
                 // cam = new WebSocket("ws://localhost:4443/stream_ws?stream_label=" + stream_labels.label );
-                cam = new WebSocket("ws://localhost:4443/stream_ws?stream_label=PeopleQueing");
+                cam = new WebSocket("ws://localhost:4443/stream_ws?stream_label={{stream_label}}");
                 cam.onmessage = function (msg) {
                     $("#cam").attr('src', 'data:image/jpg;base64,' + msg.data);
                 };
@@ -19,8 +21,6 @@
             }
         });
     </script>
-</head>
-<body>
     <img id="cam" src="" width="640" height="480" />
-</body>
-</html> 
+</section>
+{% endblock %}

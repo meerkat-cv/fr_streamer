@@ -1,7 +1,7 @@
 {
 	"testSequences": [
 		{
-			"camera_url": "0", "label": "Webcam", 
+			"camera_url": "http://admin:gremio83@192.168.25.98/video/mjpg.cgi?.mjpeg", "label": "D-Link camera", 
 			"tempCoherence": 
 			{
 				"tempWindow": 15,
@@ -14,7 +14,7 @@
 	{
 		"api_key": "4a8aecb9d691b134b30479b0a2cfc85f",
 		"ip": "mserver",
-		"port": 4445,
+		"port": 4444,
 		"output": {
 			"json": {
 				"node_frames": 5,
