@@ -1,6 +1,6 @@
 
 import flask
-from flask import abort
+from flask import abort, render_template
 from flask.ext.classy import FlaskView, route, request
 from fr_streamer.controllers.config_controller import ConfigController
 from fr_streamer.views import error_view
@@ -75,3 +75,15 @@ class ConfigView(FlaskView):
                 description: Problem on the configuration
         """
         return self.apply_config(request)
+
+
+    @route('/stream/list', methods=['GET'])
+    def config_list(self):
+        """
+        Reads all the streams and render a template with a list
+        of configuration
+        """
+        streams = self.config.frapi_client.config.config_data['testSequences'];
+        return render_template('list_stream.html', stream_list=streams)
+
+

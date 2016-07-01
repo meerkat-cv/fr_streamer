@@ -37,10 +37,13 @@ def build_app():
     print('Registering views')
     from fr_streamer.views.config_view import ConfigView
     from fr_streamer.views.stream_output_view import StreamOutputView
+    from fr_streamer.views.index_view import IndexView
     import fr_streamer.views.error_view
 
     ConfigView.register(app)
     StreamOutputView.register(app)
+    IndexView.register(app)
+    print('done.')
     
     # app.wsgi_app = ProxyFix(app.wsgi_app)
     # logging.basicConfig(

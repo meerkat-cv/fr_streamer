@@ -20,4 +20,16 @@ class StreamOutputView(FlaskView):
         stream_labels = {'label': labels}
         
         return flask.render_template("stream_output.html", stream_labels=stream_labels)
+
+    @route('/watch/<label>', methods=['GET'])
+    def plot_streams(self, label):
+        """
+        Show the all the camera streams.
+        """
+        print("label to watch: ",label)
+        labels = self.frapi_client_controller.get_stream_labels();
+        stream_labels = {'label': labels}
+        print("stream_labels",stream_labels)
+        
+        return flask.render_template("stream_output.html", stream_labels=stream_labels)
         

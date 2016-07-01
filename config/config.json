@@ -12,9 +12,9 @@
 
 	"frapi": 
 	{
-		"api_key": "31073ec069755973e0787239a26523c5",
-		"ip": "192.168.25.181",
-		"port": 4444,
+		"api_key": "4a8aecb9d691b134b30479b0a2cfc85f",
+		"ip": "mserver",
+		"port": 4445,
 		"output": {
 			"json": {
 				"node_frames": 5,
