@@ -25,16 +25,16 @@
             'output': {}
         };
 
-        if ($('#jsonCheck').checked) {
+        if ($('#jsonCheck')[0].checked) {
             d['output']['json'] = {
                 'node_frames': parseInt($('#jsonNode').val(), 10),
                 'dir': $('#jsonSaveDir').val()
             };
         }
-        if ($('#postHttpCheck').checked) {
+        if ($('#postHttpCheck')[0].checked) {
             d['output']['http_post'] = {
-                'node_frames': parseInt($('#jsonNode').val(), 10),
-                'dir': $('#jsonSaveDir').val
+                'url': $('#httpUrl').val(),
+                'post_image': $('#http-send-image')[0].checked
             };
         }
 
