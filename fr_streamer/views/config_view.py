@@ -82,9 +82,24 @@ class ConfigView(FlaskView):
         This views receives the server configuration and update the config. Should
         trigger a live reload of parameters of the streamer.
         """
-        server_config = request.get_json();
-        print('server_config', server_config);
-        raise error_view.InvalidParametersError('Not yer implemented!');
+        curr_config = self.config.frapi_client.config.config_data;
+        (ok, error, server_config) = self.config_from_request(request)
+        if not ok:
+            raise error_view.InvalidParametersError(error)
+
+        print('server_config', server_config)
+
+        print('config before', curr_config)
+        curr_config['frapi'] = server_config
+        print('config after', curr_config)
+
+        self.config.change_config(curr_config)
+        (ok, error) = self.config.change_config(curr_config)
+        if not ok:
+            raise error_view.InternalError(error)
+        else:
+            return flask.jsonify({})
+
 
 
     @route('/config/modify', methods=['GET'])
