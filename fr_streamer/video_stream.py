@@ -208,12 +208,16 @@ class CameraUrl(VideoStream):
 
 
     def open(self, camera_url):
-        if camera_url == '0':
-            self.video = cv2.VideoCapture(0)
-        else:
-            self.video = cv2.VideoCapture(camera_url)
+        try:
+            if camera_url == '0':
+                self.video = cv2.VideoCapture(0)
+            else:
+                self.video = cv2.VideoCapture(camera_url)
+        except:
+            logging.error('VideoStream::open() -- problem opening ' + camera_url)
+            return 
 
-        if self.video.isOpened() == False:
+        if self.video is None or self.video.isOpened() == False:
             logging.error('VideoStream::open() -- problem opening ' + camera_url)
         else:
             self.is_opened = True
