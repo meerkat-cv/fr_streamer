@@ -76,6 +76,21 @@ class ConfigView(FlaskView):
         """
         return self.apply_config(request)
 
+    @route('/config/modify', methods=['GET'])
+    def config_post(self):
+        """
+        This view passes to the render all the configuration that the system
+        has and applies to the form.
+        """
+        streams = self.config.frapi_client.config.config_data['testSequences']
+        print('streams', streams)
+        server_config = self.config.frapi_client.config.config_data['frapi']
+        output_json = 'json' in self.config.frapi_client.config.config_data['frapi']['output']
+        output_post = 'http_post' in self.config.frapi_client.config.config_data['frapi']['output']
+        return render_template("modify_config.html", stream_list=streams, server_config=server_config, \
+            output_json=output_json, output_post=output_post)
+
+
 
     @route('/stream/list', methods=['GET'])
     def config_list(self):

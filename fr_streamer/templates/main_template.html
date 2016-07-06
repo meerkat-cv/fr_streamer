@@ -24,6 +24,8 @@ scratch. This page gets rid of all links and provides the needed markup only.
   -->
   <link rel="stylesheet" href="/fr_streamer/static/dist/css/skins/skin-blue.min.css">
 
+  <link rel="stylesheet" href="/fr_streamer/static/plugins/iCheck/all.css">
+
   <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
   <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
   <!--[if lt IE 9]>
@@ -116,6 +118,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
         <li class="header">MENU</li>
         <!-- Optionally, you can add icons to the links -->
         <li><a href="/fr_streamer/stream/list"><i class="fa fa-circle-o"></i> <span>List streams</span></a></li>
+        <li><a href="/fr_streamer/config/modify"><i class="fa fa-circle-o"></i> <span>Modify config</span></a></li>
         <!-- <li><a href="#"><i class="fa fa-link"></i> <span>Another Link</span></a></li>
         <li class="treeview">
           <a href="#"><i class="fa fa-link"></i> <span>Multilevel</span> <i class="fa fa-angle-left pull-right"></i></a>
@@ -130,20 +133,23 @@ scratch. This page gets rid of all links and provides the needed markup only.
     <!-- /.sidebar -->
   </aside>
 
-  <!-- Content Wrapper. Contains page content -->
   <div class="content-wrapper">
-    <!-- Content Header (Page header) / this will come from the server-->
-    {% block content %}{% endblock %}
-    
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+
+      {% block content_header %}{% endblock %}
+    </section>
+
     <!-- Main content -->
     <section class="content">
 
       <!-- Your Page Content Here -->
-
+      {% block content %}{% endblock %}
     </section>
     <!-- /.content -->
   </div>
-  <!-- /.content-wrapper -->
+
+
 
   <!-- Main Footer -->
   <footer class="main-footer">
@@ -241,9 +247,22 @@ scratch. This page gets rid of all links and provides the needed markup only.
 <!-- AdminLTE App -->
 <script src="/fr_streamer/static/dist/js/app.min.js"></script>
 
+<script src="/fr_streamer/static/plugins/iCheck/icheck.min.js"></script>
+
+<script>
+    $('input[type="checkbox"].minimal, input[type="radio"].minimal').iCheck({
+      checkboxClass: 'icheckbox_minimal-blue',
+      radioClass: 'iradio_minimal-blue'
+    });
+    
+    {% block script %}{% endblock %}
+
+</script>
 <!-- Optionally, you can add Slimscroll and FastClick plugins.
      Both of these plugins are recommended to enhance the
      user experience. Slimscroll is required when using the
      fixed layout. -->
+
+{% block load_script %}{% endblock %}
 </body>
 </html>

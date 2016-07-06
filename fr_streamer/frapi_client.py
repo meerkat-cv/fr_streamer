@@ -274,10 +274,10 @@ class FrapiClient(Singleton):
             del self.stream_temp_coherence[stream_label]
         self.num_streams = self.num_streams - 1
 
-        for seq in self.config.config_data['testSequences']:
-            if seq['label'] == stream_label:
-                self.config.config_data['testSequences'].remove(seq)
-                break
+        # for seq in self.config.config_data['testSequences']:
+        #     if seq['label'] == stream_label:
+        #         self.config.config_data['testSequences'].remove(seq)
+        #         break
 
 
     def end_transmissions(self):
