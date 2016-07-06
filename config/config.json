@@ -1,7 +1,7 @@
 {
 	"testSequences": [
 		{
-			"camera_url": "http://admin:gremio83@192.168.25.98/video/mjpg.cgi?.mjpeg", "label": "D-Link camera", 
+			"camera_url": "http://admin:gremio83@192.168.25.98.0/video/mjpg.cgi?.mjpeg", "label": "D-Link camera", 
 			"tempCoherence": 
 			{
 				"tempWindow": 15,

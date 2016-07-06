@@ -41,10 +41,19 @@
         return d;
     }
 
+    ModifyConfig.enableLoading = function () {
+        $('.loading-overlay').removeClass('hidden');
+    }
+
+    ModifyConfig.disableLoading = function () {
+        $('.loading-overlay').addClass('hidden');
+    }
+
     ModifyConfig.bindSubmitButton = function () {
         var self = this;
 
         $('#submit-button').click( function() {
+            self.enableLoading();
             $.ajax({
                 type: 'post',
                 url: '/fr_streamer/config/modify_server',
@@ -55,6 +64,9 @@
                 },
                 error: function (jqXHR, textStatus, errorThrown) {
                     self.showError(jqXHR.responseText);
+                },
+                complete: function() {
+                    self.disableLoading();
                 }
             });    
         });

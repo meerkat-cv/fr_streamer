@@ -50,7 +50,7 @@ class FrapiClient(Singleton):
 
 
     def update_config(self, config_data):
-        self.mtx.acquire()
+        # self.mtx.acquire()
         streams_url = []
         streams_label = []
         for s in list(self.streams.keys()):
@@ -59,7 +59,7 @@ class FrapiClient(Singleton):
 
         (ok, error, new_transmissions, ended_transmissions) = self.config.update_config(config_data, streams_label, streams_url)
         if not ok:
-            self.mtx.release()
+            # self.mtx.release()
             return (ok, error)
 
         for transmission in ended_transmissions:
@@ -70,7 +70,7 @@ class FrapiClient(Singleton):
             if not ok:
                 logging.error(error)
 
-        self.mtx.release()
+        # self.mtx.release()
         return (True, None)
 
 

@@ -47,6 +47,7 @@ class WebSocketFrapi(WebSocketClient):
     def config(self, config_data, ws_url, stream_label, client):
         self.ws_url = ws_url
         self.video = video_stream.load_from_config(config_data)
+        
         self.client = client
         self.stream_label = str(stream_label)
         if self.video.isOpened() == False:
