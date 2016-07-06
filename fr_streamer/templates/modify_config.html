@@ -1,0 +1,143 @@
+{% extends "main_template.html" %} 
+<section class="content-header">
+{% block content_header %}
+      <h1>
+        Modify configuration
+        <!-- <small>Optional description</small> -->
+      </h1>
+      <ol class="breadcrumb">
+        <li><a href="#">Home</a></li>
+        <li class="active">Modify</li>
+      </ol>
+{% endblock %}
+
+{% block content %} 
+    <div class="row">
+        <div class="col-xs-12">
+            <div class="box box-warning">
+                <div class="box-header">
+                    <h3 class="box-title">Streams configurated</h3>
+                    <!-- <div class="box-tools">
+                        <div class="input-group input-group-sm" style="width: 150px;">
+                            <input type="text" name="table_search" class="form-control pull-right" placeholder="Search">
+                            <div class="input-group-btn">
+                                <button type="submit" class="btn btn-default"><i class="fa fa-search"></i></button>
+                            </div>
+                        </div>
+                    </div> -->
+                </div>
+                <!-- /.box-header -->
+                <div class="box-body table-responsive no-padding">
+                    <table class="table table-hover">
+                        <tr>
+                            <th>Label</th>
+                            <th>Camera Url</th>
+                            <th>Threshold</th>
+                            <th>Temporal Win.</th>
+                            <th>Edit</th>
+                            <th>Delete</th>
+                        </tr>
+                        {% for s in stream_list %}
+                        <tr>
+                            <td>{{ s.label }}</td>
+                            <td>{{ s.camera_url }}</td>
+                            <td>{{ s.tempCoherence.threshold }}</td>
+                            <td>{{ s.tempCoherence.tempWindow }}</td>
+                            <td>
+                                <a href="#">
+                                    <spam class="fa fa-pencil"></spam>
+                            </td>
+                            <td>
+                                <a href="#">
+                                    <spam class="fa fa-trash"></spam>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </table>
+                </div>
+                <div class="box-body">
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-warning">Add</button>
+                    </div>
+                </div>
+                <!-- /.box-body -->
+                
+                <div class="box-header with-border">
+                    <h3 class="box-title">Server settings</h3>
+                </div>
+                <!-- /.box-header -->
+                <!-- form start -->
+                <form role="form">
+                    <div class="box-body">
+                        <div class="form-group">
+                            <label for="exampleInputEmail1">API Key</label>
+                            <input type="text" class="form-control" id="apiKeyInput" placeholder="Enter the API Key for the server">
+                        </div>
+                        <div class="form-group col-xs-8 no-padding">
+                            <label>Server IP address:</label>
+                            <div class="input-group">
+                                <div class="input-group-addon">
+                                    <i class="fa fa-laptop"></i>
+                                </div>
+                                <input type="text" class="form-control" id="ipInput" data-inputmask="'alias': 'ip'" data-mask>
+                            </div>
+                        </div>
+                        <div class="form-group col-xs-4">
+                            <label>Server port:</label>
+                            <input type="text" class="form-control" id="portInput">
+                        </div>
+                    </div>
+                
+                <div class="box-header with-border">
+                    <h3 class="box-title">Output settings</h3>
+                </div>
+                
+                    <div class="box-body">
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" class="minimal" id="jsonCheck"> Output via JSON
+                            </label>
+                            <p class="help-block">Check this if you like to generate JSONs with recognition results.</p>
+                        </div>
+                        <div class="form-group col-xs-8">
+                            <label>Directory:</label>
+                            <input type="text" class="form-control json-output" id="jsonSaveDir" placeholder="/directory/to/put/JSON/">
+                        </div>
+                        <div class="form-group col-xs-4">
+                            <label># Frames per batch:</label>
+                            <input type="text" id="jsonNode" class="form-control json-output">
+                        </div>
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" class="minimal" id="postHttpCheck"> Make HTTP post
+                            </label>
+                            <p class="help-block">Check this to receibe a HTTP for each recognition.</p>
+                        </div>
+                        <div class="form-group col-xs-12">
+                            <label>Url:</label>
+                            <input type="text" id="httpUrl" class="form-control http-output" placeholder="http://yourserver/path/">
+                        </div>
+                        <div class="form-group col-xs-12 ">
+                            <label>
+                                <input type="checkbox" id="http-send-image" class="minimal http-output"> Send image
+                            </label>
+                            <p class="help-block">Check this to receive the image as well in the payload.</p>
+                        </div>
+                    </div>
+                </form>
+                <div class="box-footer">
+                    <button type="submit" id="submit-button" class="btn btn-primary">Submit</button>
+                </div>
+            </div>
+            <!-- /.box -->
+        </div>
+    </div>
+</section>
+{% endblock %} {% block script %} 
+
+
+$('#jsonCheck').on('ifChecked', function(event){ $('.json-output').removeAttr('disabled'); }); $('#jsonCheck').on('ifUnchecked', function(event){ $('.json-output').attr('disabled', 'disabled'); }); $('#postHttpCheck').on('ifChecked', function(event){ $('.http-output').removeAttr('disabled'); }); $('#postHttpCheck').on('ifUnchecked', function(event){ $('.http-output').attr('disabled', 'disabled'); }); {% if output_json == true %} $('#jsonCheck').iCheck('check'); $('#jsonSaveDir').val('{{ server_config.output.json.dir }}'); $('#jsonNode').val('{{ server_config.output.json.node_frames }}'); {% endif %} {% if output_post == true %} $('#postHttpCheck').iCheck('check'); $('#httpUrl').val('{{ server_config.output.http_post.url }}'); {% if server_config.output.http_post.post_image == True %} $('#http-send-image').iCheck('check'); {% else %} $('#http-send-image').iCheck('uncheck'); {% endif %} {% endif %} $('#apiKeyInput').val('{{ server_config.api_key }}'); $('#ipInput').val('{{ server_config.ip }}'); $('#portInput').val('{{ server_config.port }}'); {% endblock %}
+
+{% block load_script %}
+<script src="/fr_streamer/static/meerkat/js/modify_config.js"></script>
+{% endblock %}
