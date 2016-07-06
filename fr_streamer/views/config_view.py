@@ -76,8 +76,19 @@ class ConfigView(FlaskView):
         """
         return self.apply_config(request)
 
+    @route('/config/modify_server', methods=['POST'])
+    def config_modify_server(self):
+        """
+        This views receives the server configuration and update the config. Should
+        trigger a live reload of parameters of the streamer.
+        """
+        server_config = request.get_json();
+        print('server_config', server_config);
+        raise error_view.InvalidParametersError('Not yer implemented!');
+
+
     @route('/config/modify', methods=['GET'])
-    def config_post(self):
+    def config_modify_webapp(self):
         """
         This view passes to the render all the configuration that the system
         has and applies to the form.

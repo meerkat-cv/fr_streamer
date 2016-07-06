@@ -6,6 +6,13 @@
         this.bindSubmitButton();
     }
 
+    ModifyConfig.showError = function (server_error) {
+        if (server_error) {
+            $('.alert-danger').children('#server_response').html(server_error);    
+        }
+        $('.alert-danger').removeClass('hidden');
+    }
+
     ModifyConfig.getData = function () {
         d = {
             'api_key': $('#apiKeyInput').val,
@@ -29,22 +36,26 @@
     }
 
     ModifyConfig.bindSubmitButton = function () {
+        var self = this;
 
-        $.ajax({
-            type: 'post',
-            url: 'insertdata.php',
-            data: {
-                user_name: name,
-                user_age: age,
-                user_course: course
-            },
-            success: function (response) {
-                $('#success__para').html("You data will be saved");
-            }
+        $('#submit-button').click( function() {
+            $.ajax({
+                type: 'post',
+                url: '/fr_streamer/config/modify_server',
+                data: self.getData(),
+                sucess: function (response) {
+                    console.log('done!');
+                    $('#success__para').html("You data will be saved");
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    self.showError(jqXHR.responseText);
+                }
+            });    
         });
     }
 
-    global.ModifyConfig = new ModifyConfig();
+    global.ModifyConfig = ModifyConfig;
+
     global.ModifyConfig.init();
 
 }(window, jQuery));

@@ -26,6 +26,7 @@
                         </div>
                     </div> -->
                 </div>
+                
                 <!-- /.box-header -->
                 <div class="box-body table-responsive no-padding">
                     <table class="table table-hover">
@@ -132,6 +133,16 @@
             <!-- /.box -->
         </div>
     </div>
+     <div class="row">
+        <div class="col-xs-1"></div>
+        <div class="col-xs-10">
+            <div class="alert alert-danger alert-dismissible hidden">
+                    <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+                    <h4><i class="icon fa fa-ban"></i> Error on submitting data!</h4>
+                    An error ocurred in saving the configuration data. The server response: <spam id="server_response">EMPTY</spam>
+            </div>
+        </div>
+    </div>
 </section>
 {% endblock %} {% block script %} 
 
@@ -139,5 +150,5 @@
 $('#jsonCheck').on('ifChecked', function(event){ $('.json-output').removeAttr('disabled'); }); $('#jsonCheck').on('ifUnchecked', function(event){ $('.json-output').attr('disabled', 'disabled'); }); $('#postHttpCheck').on('ifChecked', function(event){ $('.http-output').removeAttr('disabled'); }); $('#postHttpCheck').on('ifUnchecked', function(event){ $('.http-output').attr('disabled', 'disabled'); }); {% if output_json == true %} $('#jsonCheck').iCheck('check'); $('#jsonSaveDir').val('{{ server_config.output.json.dir }}'); $('#jsonNode').val('{{ server_config.output.json.node_frames }}'); {% endif %} {% if output_post == true %} $('#postHttpCheck').iCheck('check'); $('#httpUrl').val('{{ server_config.output.http_post.url }}'); {% if server_config.output.http_post.post_image == True %} $('#http-send-image').iCheck('check'); {% else %} $('#http-send-image').iCheck('uncheck'); {% endif %} {% endif %} $('#apiKeyInput').val('{{ server_config.api_key }}'); $('#ipInput').val('{{ server_config.ip }}'); $('#portInput').val('{{ server_config.port }}'); {% endblock %}
 
 {% block load_script %}
-<script src="/fr_streamer/static/meerkat/js/modify_config.js"></script>
+<script src="/fr_streamer/static/meerkat/js/modify_config_submit.js"></script>
 {% endblock %}
