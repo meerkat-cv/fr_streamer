@@ -79,7 +79,7 @@ class ConfigView(FlaskView):
     @route('/config/modify_server', methods=['POST'])
     def config_modify_server(self):
         """
-        This views receives the server configuration and update the config. Should
+        This view receives the server configuration and update the config. Should
         trigger a live reload of parameters of the streamer.
         """
         curr_config = self.config.frapi_client.config.config_data;
@@ -87,12 +87,48 @@ class ConfigView(FlaskView):
         if not ok:
             raise error_view.InvalidParametersError(error)
 
-        print('server_config', server_config)
-
-        print('config before', curr_config)
         curr_config['frapi'] = server_config
-        print('config after', curr_config)
+        
+        self.config.change_config(curr_config)
+        (ok, error) = self.config.change_config(curr_config)
+        if not ok:
+            raise error_view.InternalError(error)
+        else:
+            return flask.jsonify({})
 
+    @route('/config/remove_stream/<label>', methods=['DELETE'])
+    def remove_stream(self, label):
+        curr_config = self.config.frapi_client.config.config_data;
+        all_labels = {l['label']:i for i,l in enumerate(curr_config['testSequences'])}
+        
+        if label in all_labels.keys():
+            del curr_config['testSequences'][all_labels[label]]
+            return '', 200
+        else:
+            return error_view.InternalError('Provided label not found!')
+
+
+    
+
+    @route('/config/upsert_stream', methods=['POST'])
+    def upsert_stream(self):
+        """
+        This view receives a stream and add it (or modify) of the
+        list of configurations
+        """
+        curr_config = self.config.frapi_client.config.config_data;
+        (ok, error, stream_cfg) = self.config_from_request(request)
+        if not ok:
+            raise error_view.InvalidParametersError(error)
+
+        label = stream_cfg['label']
+        all_labels = {l['label']:i for i,l in enumerate(curr_config['testSequences'])}
+        
+        if label in all_labels.keys():
+            curr_config['testSequences'][all_labels[label]] = stream_cfg
+        else:
+            curr_config['testSequences'].append(stream_cfg)
+        
         self.config.change_config(curr_config)
         (ok, error) = self.config.change_config(curr_config)
         if not ok:
@@ -109,10 +145,10 @@ class ConfigView(FlaskView):
         has and applies to the form.
         """
         streams = self.config.frapi_client.config.config_data['testSequences']
-        print('streams', streams)
         server_config = self.config.frapi_client.config.config_data['frapi']
         output_json = 'json' in self.config.frapi_client.config.config_data['frapi']['output']
         output_post = 'http_post' in self.config.frapi_client.config.config_data['frapi']['output']
+        
         return render_template("modify_config.html", stream_list=streams, server_config=server_config, \
             output_json=output_json, output_post=output_post)
 

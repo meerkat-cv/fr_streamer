@@ -1,18 +1,22 @@
 {
 	"testSequences": [
 		{
-			"camera_url": "http://admin:gremio83@192.168.25.98.0/video/mjpg.cgi?.mjpeg", "label": "D-Link camera", 
+			"camera_url": "http://admin:gremio83@192.168.25.98/video/mjpg.cgi?.mjpeg", "label": "D-Link camera", 
 			"tempCoherence": 
 			{
 				"tempWindow": 15,
 				"threshold": 60
 			}
+		},
+		{
+			"video_file": "this will not pass", "label": "gandalf",
+			"tempCoherence": {}
 		}
 	],
 
 	"frapi": 
 	{
-		"api_key": "4a8aecb9d691b134b30479b0a2cfc85f",
+		"api_key": "be68e9b604f54007cd8fb8b482b6e79f",
 		"ip": "mserver",
 		"port": 4444,
 		"output": {

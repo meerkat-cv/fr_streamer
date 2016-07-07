@@ -3,7 +3,10 @@
     var ModifyConfig = {};
 
     ModifyConfig.init = function () {
-        this.bindSubmitButton();
+        var self = this;
+        $(document).ready(function () {
+            self.bindSubmitButton();
+        });
     }
 
     ModifyConfig.showError = function (server_error) {

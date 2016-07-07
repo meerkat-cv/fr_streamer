@@ -1,5 +1,4 @@
 {% extends "main_template.html" %} 
-<section class="content-header">
 {% block content_header %}
       <h1>
         Modify configuration
@@ -29,10 +28,11 @@
                 
                 <!-- /.box-header -->
                 <div class="box-body table-responsive no-padding">
-                    <table class="table table-hover">
+                    <table class="table table-hover" id="streams-table">
                         <tr>
                             <th>Label</th>
-                            <th>Camera Url</th>
+                            <th>Type</th>
+                            <th>Path</th>
                             <th>Threshold</th>
                             <th>Temporal Win.</th>
                             <th>Edit</th>
@@ -41,16 +41,24 @@
                         {% for s in stream_list %}
                         <tr>
                             <td>{{ s.label }}</td>
-                            <td>{{ s.camera_url }}</td>
+                            {% if s.camera_url is defined %}
+                                <td>Camera</td>
+                                <td>{{ s.camera_url }}</td>
+                            {% else %}
+                                <td>Video</td>
+                                <td>{{ s.video_file }}</td>
+                            {% endif %}
                             <td>{{ s.tempCoherence.threshold }}</td>
                             <td>{{ s.tempCoherence.tempWindow }}</td>
                             <td>
-                                <a href="#">
+                                <a href="#" class="edit-stream" id="edit-stream{{ loop.index }}">
                                     <spam class="fa fa-pencil"></spam>
+                                </a>
                             </td>
                             <td>
-                                <a href="#">
+                                <a href="#" class="del-stream" id="del-stream{{ loop.index }}">
                                     <spam class="fa fa-trash"></spam>
+                                </a>
                             </td>
                         </tr>
                         {% endfor %}
@@ -58,7 +66,7 @@
                 </div>
                 <div class="box-body">
                     <div class="form-group">
-                        <button type="submit" class="btn btn-warning">Add</button>
+                        <button type="submit" class="btn btn-warning" data-toggle="modal" data-target="#modal-stream">Add</button>
                     </div>
                 </div>
                 <!-- /.box-body -->
@@ -157,6 +165,99 @@
               </div>
         </div>
     </div>
+
+    <div class="modal" id="modal-stream">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title">Add/edit stream</h4>
+            </div>
+            <div class="modal-body">
+                <div class="box box-warning">
+                    <div class="box-header with-border">
+                    <h3 class="box-title">Stream information</h3>
+                    </div>
+                    <div class="box-body">
+                        <div class="form-group">
+                            <label>Label:</label>
+                            <input type="text" id="streamLabel" class="form-control" placeholder="Ex.: back camera">
+                        </div>
+                        <p class="help-block">Select the type of stream:</p>
+                        <div class="form-group">
+                        <label>
+                          <input type="radio" name="r1" id="radioCamera" class="minimal" checked>
+                          IP Camera
+                        </label>
+
+                        <div class="form-group">
+                        <label>
+                          <input type="radio" name="r1" id="radioVideo" class="minimal">
+                          Video file
+                        </label>
+                        </div>
+
+
+                        <div class="form-group">
+                            <label id="cameraVideoLabel">Camera Url (RTP/RTSP/HTTP):</label>
+                            <input type="text" id="cameraVideoUrl" class="form-control" placeholder="rtsp://yourcamera/url.mpeg">
+                        </div>
+
+                        <div class="row">
+                            <div class="form-group">
+                                <div class="col-xs-6">
+                                    <label>Temporal Window:</label>
+                                    <input type="text" id="temporalWin" class="form-control" placeholder="15 (in frames)">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="form-group">
+                                <div class="col-xs-6">
+                                    <label>Threshold:</label>
+                                    <input type="text" id="thresholdInput" class="form-control" placeholder="60 (from 0 to 100)">
+                                </div>
+                            </div>
+                        </div>
+                         <p class="help-block">Set both values if you want to use temporal consistency. Leave them blank if you do not.</p>
+                      </div>
+                        
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default pull-left" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="saveChangesButton">Save changes</button>
+            </div>
+        </div>
+        <!-- /.modal-content -->
+    </div>
+    <!-- /.modal-dialog -->
+    </div>  
+
+
+    <div class="modal" id="modal-confirm-delete">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title">Are you sure?</h4>
+          </div>
+          <div class="modal-body">
+            <p>Are you sure you want to remove the stream <b id="confirm-delete-label">EMPTY</b>? The stream of data will be interruped.</p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default pull-left" data-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-danger" id="confirm-delete-button">Delete</button>
+          </div>
+        </div>
+        <!-- /.modal-content -->
+      </div>
+      <!-- /.modal-dialog -->
+    </div>
 </section>
 {% endblock %} {% block script %} 
 
@@ -165,4 +266,5 @@ $('#jsonCheck').on('ifChecked', function(event){ $('.json-output').removeAttr('d
 
 {% block load_script %}
 <script src="/fr_streamer/static/meerkat/js/modify_config_submit.js"></script>
+<script src="/fr_streamer/static/meerkat/js/modify_config_stream.js"></script>
 {% endblock %}

@@ -1,13 +1,18 @@
 {% extends "main_template.html" %}
+{% block content_header %}
+      <h1>
+        List Streams
+        <!-- <small>Optional description</small> -->
+      </h1>
+      <ol class="breadcrumb">
+        <li><a href="#">Home</a></li>
+        <li class="active">List</li>
+      </ol>
+{% endblock %}
 {% block content %}
-<section class="content-header">
-  <h1>
-    List of configurations
-  </h1>
-
   <div class="row">
         <div class="col-xs-12">
-          <div class="box">
+          <div class="box box-success">
             <div class="box-header">
               <h3 class="box-title">Streams configurated</h3>
 
