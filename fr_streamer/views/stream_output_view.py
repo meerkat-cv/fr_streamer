@@ -26,5 +26,5 @@ class StreamOutputView(FlaskView):
         """
         Show the all the camera streams.
         """
-        return flask.render_template("stream_output.html", stream_label=label)
+        return flask.render_template("stream_output.html", stream_label=label, frame_resolution=self.frapi_client_controller.get_frame_resolution(label))
         

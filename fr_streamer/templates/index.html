@@ -21,20 +21,54 @@
         </div>
     </div>
     <div class="box-body">
-        <p>If you are seeing this message it means that you successfully instaled your streamer app and should be able to run facial recognition on camera streams right away. </p>
+        <p>If you are seeing this message it means that you successfully installed your streamer app and should be able to run facial recognition on camera streams right away. </p>
 
         <p>But first let's take a look into our menu options:</p>
 
         <dl class="dl-horizontal">
         <dt><i class="fa fa-video-camera"></i> Streams</dt>
-        <dd>This will list all your streams configurate in this app and will allow you to look at the live feed with overlay facial recognition on top of it. Currently, all the streams
-        will show this option, so if, for some of them, the live feed does not work, check your configuration.</dd>
+        <dd><p>This will list all your streams configure in this app and will allow you to look at the live feed with overlay facial recognition on top of it. Currently, all the streams
+        will show this option, so if, for some of them, the live feed does not work, check your configuration.</p></dd>
         
         <dt><i class="fa fa-gear"></i> Configuration</dt>
-        <dd>This will alow you to set all the information regarding the stream options for your system. There are three things that you should be concerned for configuration: streams, facial recognition server and output.</dd>
+        <dd><p>This will allow you to set all the information regarding the stream options for your system. There are three things that you should be concerned for configuration: streams, facial recognition server and output.</p></dd>
+        </dl>
 
         <h4>More about configuration</h4>
-                
+
+        <p>As mentioned above there is three important things that you need to configure in the FRstreamer. Let's tackle them one at a time.</p>
+
+        <dl class="dl-horizontal">
+        <dt>Server</dt>
+        <dd><p>Because the system is distributed, one can have many FRstreamer for a single
+        facial recognition system (frAPI on-premise). You should add the server host (IP
+        and port) as well as the API key that you used in training. That way, this app
+        is able to send frames to the server and get the results.</p></dd>
+        <dt>Output</dt>
+        <dd><p>Once we receive the facial recognition results, often we want to integrate with another system or save them in local file. There are two options of output in this app. First, it is possible to configure the system to perform a HTTP POST to an
+        specific host. This is useful to integrate the facial recognition with other web
+        application. Also, there is an option to send the snapshot of the moment of the 
+        recognition along with the payload. Secondly, there is an option to simple save
+        the results in a JSON file. In order to reduce I/O operations the file is appended at each N frames, where N is also a configuration you can choose. Notice that
+        if your using the server inside a docker container you might want to create
+        docker volumes to access the data afterwards.</p></dd>
+        <dt>Streams</dt>
+        <dd><p>This is the main reason you are using this software, to configure streams
+        in which to perform facial recognition. You can have a variable number of streams
+        activate. Once a stream is added, the system will try to open and start sending
+        frames to the server automatically. It is possible to configure both IP camera
+        and video files -- use Docker volumes if you are running a container. Pro tip:
+        to use your Webcam set the camera url to "0". It is
+        also possible to use a temporal filter in order to prone the results from
+        false positives. For that you need to configure the minimum accepted value
+        of confidence and the size of the temporal window.</p></dd>
+        </dl>     
+
+        <hr>
+        <p align="center">Have fun,</p>
+
+        <p align="center">Meerkat team.</p>
+        <p  align="center"><img src="/fr_streamer/static/dist/img/full_logo_meerkat.png" width="140"></p>
 
 
     </div>

@@ -5,11 +5,14 @@ from fr_streamer.frapi_client import FrapiClient
 
 
 class FrapiClientController():
-	def __init__(self):
-		self.frapi_client = FrapiClient.instance()
+    def __init__(self):
+        self.frapi_client = FrapiClient.instance()
 
 
-	def get_stream_labels(self):
-		stream_labels = self.frapi_client.get_active_stream_labels()
+    def get_stream_labels(self):
+        stream_labels = self.frapi_client.get_active_stream_labels()
 
-		return stream_labels
+        return stream_labels
+
+    def get_frame_resolution(self, stream_label):
+        return self.frapi_client.get_frame_resolution(stream_label)

@@ -36,6 +36,7 @@ class FrapiClient(Singleton):
         self.stream_sliding_window = {}
         self.stream_temp_coherence = {}
         self.stream_results_batch = {}
+        self.stream_resolutions = {}
         self.num_streams = 0
         self.config = Config()
         self.out_stream_ws = {}
@@ -90,7 +91,7 @@ class FrapiClient(Singleton):
         self.stream_results_batch[label] = []
         self.stream_plot[label] = config_data.get('plotStream', False)
 
-        if config_data.get('tempCoherence') is not None:
+        if 'tempCoherence' in config_data and len(config_data['tempCoherence']) > 0:
             self.stream_sliding_window[label] = config_data['tempCoherence'].get('tempWindow', 15)
             method = None
             threshold = config_data['tempCoherence'].get('threshold', self.config.min_confidence)
@@ -130,26 +131,23 @@ class FrapiClient(Singleton):
             logging.error('Stream '+stream_label+' already closed.')
             return
         
-        print('ores', ores)
-        print('self.config.min_confidence', self.config.min_confidence)
-
-
         if image is not None and 'people' in ores and stream_label in self.stream_results_batch:
+            # save image resolution
+            self.stream_resolutions[stream_label] = image.shape
             # plot faces output in image
-            # self.plot_()
+            self.plot_detection_info(image, ores, stream_label)
 
 
             post_image = self.config.http_post_config is not None and len(ores['people']) > 0
 
-            if self.stream_sliding_window.get(stream_label) is not None and (self.config.save_json_config is not None or post_image):
+            if stream_label in self.stream_sliding_window and (self.config.save_json_config is not None or post_image):
                 ores = self.stream_temp_coherence[stream_label].add_frame(ores)
             else:
-                pass
-                # ores['stream_label'] = stream_label
-                # to_remove = []
-                # for idx, people in enumerate(ores['people']):
-                #     if people['recognition']['confidence'] < self.config.min_confidence:
-                #         to_remove.append(idx)
+                ores['stream_label'] = stream_label
+                to_remove = []
+                for idx, people in enumerate(ores['people']):
+                    if people['recognition']['confidence'] < self.config.min_confidence:
+                        to_remove.append(idx)
 
                 for people in to_remove:
                     del ores['people'][people]
@@ -204,7 +202,14 @@ class FrapiClient(Singleton):
         self.stream_results_batch[stream_label].clear()
 
 
-    def plot_recognition_info(self, image, ores, stream_label):
+    def get_frame_resolution(self, stream_label):
+        if stream_label in self.stream_resolutions:
+            return self.stream_resolutions[stream_label]
+        else:
+            return None
+
+
+    def plot_detection_info(self, image, ores, stream_label):
         for idx, rec in enumerate(ores['people']):
             tl = []
             br = []
@@ -216,6 +221,23 @@ class FrapiClient(Singleton):
                 tl = [l, t]
                 br = [r, b]
                 cv2.rectangle(image, (int(tl[0]), int(tl[1])), (int(br[0]), int(br[1])), (165, 142, 254), 4)
+
+        self.plot_fps(image, self.streams[stream_label].video)
+
+        return image
+            
+    def plot_recognition_info(self, image, ores, stream_label):
+        for idx, rec in enumerate(ores['people']):
+            tl = []
+            br = []
+            if rec.get('top_left') is not None:
+                l = rec['top_left']['x']
+                t = rec['top_left']['y']
+                r = rec['bottom_right']['x']
+                b = rec['bottom_right']['y']
+                tl = [l, t]
+                br = [r, b]
+                # cv2.rectangle(image, (int(tl[0]), int(tl[1])), (int(br[0]), int(br[1])), (165, 142, 254), 4)
             else:
                 tl = [10, 40+idx*40]
             
@@ -227,7 +249,7 @@ class FrapiClient(Singleton):
             cv2.rectangle(image, (text_pt[0], text_pt[1]-text_size[1]-4), (text_pt[0] + text_size[0], text_pt[1]+4), (165, 142, 254), -1)
             cv2.putText(image, label, text_pt, font_face, 1, (255, 255, 255), 2)
 
-        self.plot_fps(image, self.streams[stream_label].video)
+        # self.plot_fps(image, self.streams[stream_label].video)
 
         if self.stream_plot[stream_label]:
             cv2.imshow(stream_label, image)

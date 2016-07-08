@@ -9,7 +9,8 @@
         $(document).ready(function(){
             if ("WebSocket" in window) {
                 // cam = new WebSocket("ws://localhost:4443/stream_ws?stream_label=" + stream_labels.label );
-                cam = new WebSocket("ws://localhost:4443/stream_ws?stream_label={{stream_label}}");
+                var host = window.location.hostname;
+                cam = new WebSocket("ws://"+host+":4443/stream_ws?stream_label={{stream_label}}");
                 cam.onmessage = function (msg) {
                     $("#cam").attr('src', 'data:image/jpg;base64,' + msg.data);
                 };
@@ -21,6 +22,10 @@
             }
         });
     </script>
-    <img id="cam" src="" width="640" height="480" />
+    {% if frame_resolution is defined %}
+        <img id="cam" src="" width="{{ frame_resolution[1] }}" height="{{ frame_resolution[0] }}" />
+    {% else %}
+        <img id="cam" src="" width="640" height="480" />
+    {% endif %}
 </section>
 {% endblock %}

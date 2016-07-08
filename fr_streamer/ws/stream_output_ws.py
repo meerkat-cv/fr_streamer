@@ -16,7 +16,7 @@ class StreamOutputWebSocket(tornado.websocket.WebSocketHandler):
     def __init__(self, application, request, **kwargs):
         tornado.websocket.WebSocketHandler.__init__(self, application, request,
                                                                       **kwargs)
-        self.mtx = Lock()
+        # self.mtx = Lock()
         self.is_open = False
         self.stream_label = 'None'
         self.frapi_client = FrapiClient.instance()
@@ -38,14 +38,14 @@ class StreamOutputWebSocket(tornado.websocket.WebSocketHandler):
         if self.is_open == False:
             return
 
-        self.mtx.acquire()
+        # self.mtx.acquire()
         try:
             _, framecomp = cv2.imencode('.jpg', frame)
             self.write_message(base64.b64encode(framecomp), binary=False)
         except:
             app.logger.error('Problem sending frame from websocket ' + self.stream_label )
 
-        self.mtx.release()
+        # self.mtx.release()
 
 
     def on_message(self, message):
