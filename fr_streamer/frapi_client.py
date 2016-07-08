@@ -39,6 +39,7 @@ class FrapiClient(Singleton):
         self.num_streams = 0
         self.config = Config()
         self.out_stream_ws = {}
+        self.config.min_confidence = 0
 
         try:
             with open('./config/config.json') as data:
@@ -122,23 +123,32 @@ class FrapiClient(Singleton):
             logging.error('Stream '+stream_label+' already closed.')
             return
         
+        print('ores', ores)
+        print('self.config.min_confidence', self.config.min_confidence)
+
+
         if image is not None and 'people' in ores and stream_label in self.stream_results_batch:
+            # plot faces output in image
+            # self.plot_()
+
+
             post_image = self.config.http_post_config is not None and len(ores['people']) > 0
 
             if self.stream_sliding_window.get(stream_label) is not None and (self.config.save_json_config is not None or post_image):
                 ores = self.stream_temp_coherence[stream_label].add_frame(ores)
             else:
-                ores['stream_label'] = stream_label
-                to_remove = []
-                for idx, people in enumerate(ores['people']):
-                    if people['recognition']['confidence'] < self.config.min_confidence:
-                        to_remove.append(idx)
+                pass
+                # ores['stream_label'] = stream_label
+                # to_remove = []
+                # for idx, people in enumerate(ores['people']):
+                #     if people['recognition']['confidence'] < self.config.min_confidence:
+                #         to_remove.append(idx)
 
                 for people in to_remove:
                     del ores['people'][people]
             
-            if post_image or self.stream_plot[stream_label]:
-                debug_image = self.plot_recognition_info(image, ores, stream_label)
+            # if post_image or self.stream_plot[stream_label]:
+            debug_image = self.plot_recognition_info(image, ores, stream_label)
 
             # the output is only activate if there is someone recognized.
             if self.config.save_json_config is not None:
@@ -242,7 +252,7 @@ class FrapiClient(Singleton):
 
 
     def remove_stream_output_ws(self, stream_label):
-        if stream_add in self.out_stream_ws:
+        if stream_label in self.out_stream_ws:
             del self.out_stream_ws[stream_label]
         else:
             logging.error('problem removing inexisting StreamOutputWebSocket: '+stream_label)

@@ -1,9 +1,50 @@
-{% extends "main_template.html" %}
-{% block content %}
-<section class="content-header">
-  <h1>
-    Admin application for facial recognition video streaming.
-    <small>Version: {{version}}</small>
-  </h1>
-</section>
+{% extends "main_template.html" %} {% block content_header %}
+<h1>
+        Admin application for facial recognition video streaming.
+        <small>Version: {{version}}</small>
+      </h1>
+<ol class="breadcrumb">
+    <li><a href="#">Home</a></li>
+</ol>
+{% endblock %} {% block content %}
+<!-- Default box -->
+<div class="row">
+<div class="col-md-8">
+<div class="box">
+    <div class="box-header with-border">
+        <h3 class="box-title">Welcome to FRstreamer!</h3>
+        <div class="box-tools pull-right">
+            <button type="button" class="btn btn-box-tool" data-widget="collapse" data-toggle="tooltip" title="Collapse">
+                <i class="fa fa-minus"></i></button>
+            <button type="button" class="btn btn-box-tool" data-widget="remove" data-toggle="tooltip" title="Remove">
+                <i class="fa fa-times"></i></button>
+        </div>
+    </div>
+    <div class="box-body">
+        <p>If you are seeing this message it means that you successfully instaled your streamer app and should be able to run facial recognition on camera streams right away. </p>
+
+        <p>But first let's take a look into our menu options:</p>
+
+        <dl class="dl-horizontal">
+        <dt><i class="fa fa-video-camera"></i> Streams</dt>
+        <dd>This will list all your streams configurate in this app and will allow you to look at the live feed with overlay facial recognition on top of it. Currently, all the streams
+        will show this option, so if, for some of them, the live feed does not work, check your configuration.</dd>
+        
+        <dt><i class="fa fa-gear"></i> Configuration</dt>
+        <dd>This will alow you to set all the information regarding the stream options for your system. There are three things that you should be concerned for configuration: streams, facial recognition server and output.</dd>
+
+        <h4>More about configuration</h4>
+                
+
+
+    </div>
+    <!-- /.box-body -->
+    <div class="box-footer">
+        Any problems contact us in <a href="mailto:support@meerkat.com.br">support@meerkat.com.br</a>
+    </div>
+    <!-- /.box-footer-->
+</div>
+</div>
+</div>
+<!-- /.box -->
 {% endblock %}
