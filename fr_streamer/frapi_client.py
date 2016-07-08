@@ -71,6 +71,13 @@ class FrapiClient(Singleton):
             if not ok:
                 logging.error(error)
 
+        try:
+            with open('./config/config.json', 'w') as outfile:
+                json.dump(config_data, outfile)
+        except:
+            logging.warn('Unable to save configuration into local file JSON.')
+
+
         # self.mtx.release()
         return (True, None)
 
