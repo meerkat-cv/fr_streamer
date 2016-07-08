@@ -1,1 +1,25 @@
-{"frapi": {"api_key": "21ded32f77a8ad3f7b2089ebebebe6c8", "port": 4444, "ip": "192.168.25.118", "output": {"http_post": {"url": "http://localhost:5000/test_premise_post", "post_image": true}, "json": {"dir": "./out_json", "node_frames": 5}}}, "testSequences": [{"label": "D-Link camera", "camera_url": "http://admin:gremio83@192.168.25.98/video/mjpg.cgi?.mjpeg", "tempCoherence": {"threshold": 40, "tempWindow": 7}}, {"label": "gandalf", "tempCoherence": {}, "video_file": "this will not pass"}]}
+{
+    "frapi": {
+        "api_key": "21ded32f77a8ad3f7b2089ebebebe6c8",
+        "port": 4444,
+        "ip": "yourserver",
+        "output": {
+            "http_post": {
+                "url": "http://localhost:5000/test_premise_post",
+                "post_image": true
+            },
+            "json": {
+                "dir": "./out_json",
+                "node_frames": 5
+            }
+        }
+    },
+    "testSequences": [{
+        "label": "D-Link camera",
+        "camera_url": "http://admin:gremio83@192.168.25.98/video/mjpg.cgi?.mjpeg",
+        "tempCoherence": {
+            "threshold": 40,
+            "tempWindow": 7
+        }
+    }]
+}
